@@ -1,0 +1,123 @@
+/* Inventory window inspired by classic fantasy RPG equipment screens. */
+.game-hud-panel:has(.inventory-panel) {
+  width: min(660px, calc(100% - 28px));
+  max-height: min(84dvh, 760px);
+  border: 2px solid #8a613d;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f1d6a5, #d9b77f 48%, #cda66e);
+  color: #382719;
+  box-shadow: 0 18px 60px rgba(0,0,0,.52), inset 0 0 0 3px rgba(255,244,211,.45);
+}
+.game-hud-panel:has(.inventory-panel) .game-hud-panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(95,59,31,.38);
+  background: linear-gradient(90deg, #e8c58f, #f4deb4 50%, #dfbd88);
+}
+.game-hud-panel:has(.inventory-panel) .game-hud-panel-header h2 { color: #4a3020; font-family: Georgia, serif; font-size: 1.15rem; }
+.game-hud-panel:has(.inventory-panel) .hud-close { border-color: rgba(91,55,30,.35); background: rgba(255,245,219,.6); color: #4a3020; }
+.game-hud-panel:has(.inventory-panel) .game-hud-panel-content {
+  max-height: calc(min(84dvh, 760px) - 58px);
+  padding: 14px;
+  background: repeating-linear-gradient(0deg, rgba(106,72,37,.025) 0 1px, transparent 1px 5px), linear-gradient(135deg, #ecd2a2, #d7b783);
+  color: #382719;
+}
+.game-hud-panel-content > .inventory-panel {
+  display: grid;
+  gap: 12px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.game-hud-panel-content > .inventory-panel > .panel-header {
+  min-height: 34px;
+  margin: 2px 0 0 !important;
+  padding: 4px 2px 7px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(100,65,35,.28) !important;
+  background: transparent !important;
+}
+.game-hud-panel-content > .inventory-panel > .panel-header h3 {
+  color: #53351f !important;
+  font-family: Georgia, serif;
+  font-size: .88rem !important;
+  letter-spacing: .06em;
+}
+.game-hud-panel-content > .inventory-panel .equipment-list,
+.game-hud-panel-content > .inventory-panel .inventory-list {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px !important;
+  margin: 0 !important;
+}
+.game-hud-panel-content > .inventory-panel .equipment-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.game-hud-panel-content > .inventory-panel .slot-box,
+.game-hud-panel-content > .inventory-panel .item-box {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 88px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 8px 7px;
+  overflow: hidden;
+  border: 2px solid #785337;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #926b49, #67472f);
+  color: #f7e9ca;
+  box-shadow: inset 0 0 0 2px rgba(239,205,151,.22), 0 2px 4px rgba(67,43,23,.28);
+}
+.game-hud-panel-content > .inventory-panel .inventory-list .item-box { min-height: 94px; }
+.game-hud-panel-content > .inventory-panel .slot-box::before,
+.game-hud-panel-content > .inventory-panel .item-box::before {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  align-self: center;
+  border: 1px solid rgba(247,226,187,.5);
+  border-radius: 7px;
+  background: radial-gradient(circle at 35% 25%, #8195a0, #263d4a 72%);
+  box-shadow: inset 0 0 8px rgba(0,0,0,.45), 0 2px 4px rgba(0,0,0,.25);
+  color: #f5dfab;
+  content: '✦';
+  font-size: 1.35rem;
+  text-shadow: 0 1px 4px #111;
+}
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(1)::before { content: '⚔'; }
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(2)::before { content: '⛑'; }
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(3)::before { content: '🛡'; }
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(4)::before { content: '👢'; }
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(5)::before,
+.game-hud-panel-content > .inventory-panel .equipment-list li:nth-child(6)::before { content: '💍'; }
+.game-hud-panel-content > .inventory-panel .inventory-list li:nth-child(4n + 1)::before { content: '⚔'; }
+.game-hud-panel-content > .inventory-panel .inventory-list li:nth-child(4n + 2)::before { content: '🛡'; }
+.game-hud-panel-content > .inventory-panel .inventory-list li:nth-child(4n + 3)::before { content: '🧪'; }
+.game-hud-panel-content > .inventory-panel .inventory-list li:nth-child(4n)::before { content: '💎'; }
+.game-hud-panel-content > .inventory-panel .slot-info,
+.game-hud-panel-content > .inventory-panel .item-info { width: 100%; min-width: 0; text-align: center; }
+.game-hud-panel-content > .inventory-panel .slot-info strong,
+.game-hud-panel-content > .inventory-panel .item-info strong { display: block; overflow: hidden; color: #fff1d2; font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.game-hud-panel-content > .inventory-panel .slot-info small,
+.game-hud-panel-content > .inventory-panel .item-info small { display: block; overflow: hidden; color: #e0cba6; font-size: .58rem; text-overflow: ellipsis; white-space: nowrap; }
+.game-hud-panel-content > .inventory-panel .slot-box > button,
+.game-hud-panel-content > .inventory-panel .item-box button { width: 100%; min-height: 27px; padding: 3px 5px; border: 1px solid rgba(255,231,191,.28); border-radius: 5px; background: rgba(25,34,32,.78); color: #fff1d2; font-size: .62rem; }
+.game-hud-panel-content > .inventory-panel .slot-box > button:hover,
+.game-hud-panel-content > .inventory-panel .item-box button:hover { border-color: #e8cb86; background: rgba(45,65,54,.95); }
+.game-hud-panel-content > .inventory-panel .item-box > div:last-child { display: flex; width: 100%; justify-content: center !important; gap: 4px !important; }
+.game-hud-panel-content > .inventory-panel .item-box > div:last-child .tag { display: none; }
+.game-hud-panel-content > .inventory-panel .item-box:has([data-action="sell"]) { background: linear-gradient(145deg, #806448, #5c422e); }
+.game-hud-panel-content > .inventory-panel .tag { color: #49311d; }
+
+@media (max-width: 520px) {
+  .game-hud-panel:has(.inventory-panel) { width: calc(100% - 16px); max-height: 86dvh; }
+  .game-hud-panel:has(.inventory-panel) .game-hud-panel-content { max-height: calc(86dvh - 56px); padding: 9px; }
+  .game-hud-panel-content > .inventory-panel .equipment-list,
+  .game-hud-panel-content > .inventory-panel .inventory-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; }
+  .game-hud-panel-content > .inventory-panel .slot-box,
+  .game-hud-panel-content > .inventory-panel .item-box { min-height: 82px; padding: 6px 4px; }
+  .game-hud-panel-content > .inventory-panel .slot-box::before,
+  .game-hud-panel-content > .inventory-panel .item-box::before { width: 32px; height: 32px; }
+}
