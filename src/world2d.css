@@ -1,5 +1,4 @@
 /* Distinct low-resolution silhouettes for the Vale's monsters. */
-.world-monster-name { paint-order: stroke; stroke: rgba(15, 20, 16, .7); stroke-width: 3px; }
 @media (prefers-reduced-motion: reduce) {
-  .world-monster, .combat-chat { animation: none !important; transition: none !important; }
+  .combat-chat { animation: none !important; transition: none !important; }
 }

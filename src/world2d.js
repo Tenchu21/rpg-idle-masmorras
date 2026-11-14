@@ -44,9 +44,10 @@ function readLogs() {
   return [...(gameApp?.querySelectorAll('.log-item') || [])].map((entry) => entry.textContent.trim());
 }
 
+// Find newly prepended entries using the old/new overlap, so a render doesn't
+// lose kill events when several combat messages arrive between syncs.
 function getNewLogs(current, previous) {
-  const maxOverlap = Math.min(current.length, previous.length);
-  for (let overlap = maxOverlap; overlap >= 0; overlap -= 1) {
+  for (let overlap = Math.min(current.length, previous.length); overlap >= 0; overlap -= 1) {
     let matches = true;
     for (let index = 0; index < overlap; index += 1) {
       if (current[index] !== previous[previous.length - overlap + index]) {
@@ -62,11 +63,7 @@ function getNewLogs(current, previous) {
 function isAlive(monster) {
   return Boolean(monster) && (respawnAt.get(monster.id) || 0) <= Date.now();
 }
-
-function availableMonsters() {
-  return monsters.filter(isAlive);
-}
-
+function availableMonsters() { return monsters.filter(isAlive); }
 function nearestAvailableMonster() {
   const available = availableMonsters();
   if (!available.length) return null;
@@ -76,7 +73,6 @@ function nearestAvailableMonster() {
     return distance < bestDistance ? monster : nearest;
   });
 }
-
 function setTarget(monster, message) {
   if (!monster) {
     status.textContent = 'Todos os monstros foram derrotados. Aguardando renascimento…';
@@ -85,7 +81,6 @@ function setTarget(monster, message) {
   select.value = monster.id;
   status.textContent = message || `Pip está indo atrás de ${monster.name}…`;
 }
-
 function syncMonsterOptions() {
   const selectedId = select.value;
   select.replaceChildren();
@@ -96,57 +91,43 @@ function syncMonsterOptions() {
     option.disabled = !isAlive(monster);
     select.append(option);
   }
-  if (selectedId && isAlive(monsters.find((monster) => monster.id === selectedId))) {
-    select.value = selectedId;
-  } else {
-    const next = nearestAvailableMonster();
-    if (next) select.value = next.id;
-  }
+  if (selectedId && isAlive(monsters.find((monster) => monster.id === selectedId))) select.value = selectedId;
+  else if (nearestAvailableMonster()) select.value = nearestAvailableMonster().id;
 }
-
 function syncHeroLevel() {
-  const levelTag = [...document.querySelectorAll('.panel-header .tag.rarity')]
-    .find((tag) => /nível/i.test(tag.textContent));
+  const levelTag = [...document.querySelectorAll('.panel-header .tag.rarity')].find((tag) => /nível/i.test(tag.textContent));
   const level = Number(levelTag?.textContent.match(/\d+/)?.[0]);
   if (Number.isFinite(level) && level > 0) {
     hero.level = level;
     heroLabel.innerHTML = `<strong>Pip · Nv. ${level}</strong><small>⚔ Aventureiro</small>`;
   }
 }
-
 function processNewCombatLogs() {
   const currentLogs = readLogs();
   const newLogs = getNewLogs(currentLogs, previousLogs);
   previousLogs = currentLogs;
-
   for (const text of newLogs) {
     const defeated = monsters.find((monster) => text.includes(`${monster.name} derrotado!`));
     if (!defeated || !isAlive(defeated)) continue;
-
     respawnAt.set(defeated.id, Date.now() + RESPAWN_DELAY);
     syncMonsterOptions();
     if (hunting && select.value === defeated.id) {
       const next = nearestAvailableMonster();
       if (next) setTarget(next, `${defeated.name} derrotado! Pip vai atrás de ${next.name}.`);
       else status.textContent = `${defeated.name} derrotado! Aguardando os monstros renascerem…`;
-    } else {
-      status.textContent = `${defeated.name} derrotado e removido do mapa.`;
-    }
+    } else status.textContent = `${defeated.name} derrotado e removido do mapa.`;
   }
 }
-
 function syncWorld() {
   syncHeroLevel();
   processNewCombatLogs();
   syncMonsterOptions();
-  if (hunting && !availableMonsters().length) {
-    status.textContent = 'Todos os monstros foram derrotados. Aguardando renascimento…';
-  } else if (hunting && !isAlive(monsters.find((monster) => monster.id === select.value))) {
+  if (hunting && !availableMonsters().length) status.textContent = 'Todos os monstros foram derrotados. Aguardando renascimento…';
+  else if (hunting && !isAlive(monsters.find((monster) => monster.id === select.value))) {
     const next = nearestAvailableMonster();
     if (next) setTarget(next);
   }
 }
-
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -154,12 +135,10 @@ function resizeCanvas() {
   canvas.height = Math.round(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-
 function drawShadow(x, y, rx, ry) {
   ctx.fillStyle = 'rgba(24, 25, 18, .28)';
   ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
 }
-
 function drawHero(x, y) {
   drawShadow(x, y + 18, 15, 5);
   ctx.fillStyle = '#315d4e'; ctx.fillRect(x - 9, y - 2, 18, 18);
@@ -168,7 +147,6 @@ function drawHero(x, y) {
   ctx.fillStyle = '#27453c'; ctx.fillRect(x - 10, y - 18, 20, 6);
   ctx.fillStyle = '#e6d481'; ctx.fillRect(x + 10, y - 10, 4, 25);
 }
-
 function drawSlime(x, y, color) {
   drawShadow(x, y + 12, 15, 5);
   ctx.fillStyle = color;
@@ -176,7 +154,6 @@ function drawSlime(x, y, color) {
   ctx.fillStyle = 'rgba(235,255,190,.65)'; ctx.fillRect(x - 7, y - 10, 5, 3);
   ctx.fillStyle = '#243126'; ctx.fillRect(x - 6, y - 1, 3, 4); ctx.fillRect(x + 5, y - 1, 3, 4);
 }
-
 function drawRat(x, y, color) {
   drawShadow(x, y + 11, 17, 5);
   ctx.strokeStyle = '#5c4c42'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 12, y + 5); ctx.quadraticCurveTo(x + 25, y + 8, x + 20, y + 17); ctx.stroke();
@@ -184,7 +161,6 @@ function drawRat(x, y, color) {
   ctx.fillStyle = '#bf9a88'; ctx.beginPath(); ctx.arc(x - 7, y - 7, 5, 0, Math.PI * 2); ctx.arc(x + 5, y - 7, 5, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#29231f'; ctx.fillRect(x - 2, y - 1, 3, 3); ctx.fillRect(x + 7, y + 2, 3, 3);
 }
-
 function drawGoblin(x, y, color) {
   drawShadow(x, y + 17, 16, 5);
   ctx.fillStyle = '#c9a66c'; ctx.beginPath(); ctx.moveTo(x - 9, y - 8); ctx.lineTo(x - 21, y - 16); ctx.lineTo(x - 15, y - 3); ctx.fill();
@@ -195,7 +171,6 @@ function drawGoblin(x, y, color) {
   ctx.fillStyle = '#f2e6c6'; ctx.fillRect(x - 5, y - 4, 4, 5); ctx.fillRect(x + 2, y - 4, 4, 5);
   ctx.fillStyle = '#6e4a36'; ctx.fillRect(x - 13, y + 13, 8, 8); ctx.fillRect(x + 5, y + 13, 8, 8);
 }
-
 function drawWolf(x, y, color) {
   drawShadow(x, y + 12, 22, 6);
   ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x - 3, y + 1, 19, 11, -.12, 0, Math.PI * 2); ctx.fill();
@@ -205,7 +180,6 @@ function drawWolf(x, y, color) {
   ctx.fillStyle = '#2c3336'; ctx.fillRect(x + 16, y - 6, 3, 3);
   ctx.strokeStyle = '#526069'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - 17, y - 1); ctx.quadraticCurveTo(x - 27, y - 12, x - 23, y - 18); ctx.stroke();
 }
-
 function drawSkeleton(x, y) {
   drawShadow(x, y + 16, 15, 5);
   ctx.fillStyle = '#ded8c4'; ctx.beginPath(); ctx.arc(x, y - 13, 10, 0, Math.PI * 2); ctx.fill();
@@ -216,114 +190,73 @@ function drawSkeleton(x, y) {
   ctx.strokeStyle = '#ded8c4'; ctx.lineWidth = 4;
   ctx.beginPath(); ctx.moveTo(x - 8, y); ctx.lineTo(x - 16, y + 9); ctx.moveTo(x + 8, y); ctx.lineTo(x + 15, y + 8); ctx.moveTo(x - 4, y + 17); ctx.lineTo(x - 7, y + 26); ctx.moveTo(x + 4, y + 17); ctx.lineTo(x + 7, y + 26); ctx.stroke();
 }
-
 function drawMonster(monster, x, y) {
-  if (monster.id === 'slime') return drawSlime(x, y, monster.color);
-  if (monster.id === 'rato') return drawRat(x, y, monster.color);
-  if (monster.id === 'goblin') return drawGoblin(x, y, monster.color);
-  if (monster.id === 'lobo') return drawWolf(x, y, monster.color);
-  if (monster.id === 'esqueleto') return drawSkeleton(x, y);
+  if (monster.id === 'slime') drawSlime(x, y, monster.color);
+  else if (monster.id === 'rato') drawRat(x, y, monster.color);
+  else if (monster.id === 'goblin') drawGoblin(x, y, monster.color);
+  else if (monster.id === 'lobo') drawWolf(x, y, monster.color);
+  else if (monster.id === 'esqueleto') drawSkeleton(x, y);
 }
-
 function draw() {
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
+  const width = canvas.clientWidth; const height = canvas.clientHeight;
   if (!width || !height) { requestAnimationFrame(draw); return; }
-  frame += 1;
-  ctx.clearRect(0, 0, width, height);
+  frame += 1; ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = '#a9a16d'; ctx.fillRect(0, 0, width, height);
   const tile = Math.max(12, Math.round(width / 62));
-  for (let y = 0; y < height; y += tile) {
-    for (let x = 0; x < width; x += tile) {
-      const hash = ((x * 17 + y * 31) % 13);
-      ctx.fillStyle = hash < 4 ? '#b7ad76' : hash < 7 ? '#a59b68' : '#b0a773';
-      ctx.fillRect(x, y, tile - 1, tile - 1);
-      if (hash === 1 || hash === 8) { ctx.fillStyle = '#6f7953'; ctx.fillRect(x + tile * .35, y + tile * .38, 2, 2); }
-    }
+  for (let y = 0; y < height; y += tile) for (let x = 0; x < width; x += tile) {
+    const hash = ((x * 17 + y * 31) % 13);
+    ctx.fillStyle = hash < 4 ? '#b7ad76' : hash < 7 ? '#a59b68' : '#b0a773'; ctx.fillRect(x, y, tile - 1, tile - 1);
+    if (hash === 1 || hash === 8) { ctx.fillStyle = '#6f7953'; ctx.fillRect(x + tile * .35, y + tile * .38, 2, 2); }
   }
-  ctx.fillStyle = '#c9b77d';
-  ctx.beginPath(); ctx.moveTo(0, height * .16); ctx.lineTo(width * .29, height * .16); ctx.lineTo(width * .39, height * .38); ctx.lineTo(width * .64, height * .38); ctx.lineTo(width * .74, height * .65); ctx.lineTo(width, height * .65); ctx.lineTo(width, height * .82); ctx.lineTo(width * .66, height * .82); ctx.lineTo(width * .56, height * .55); ctx.lineTo(width * .34, height * .55); ctx.lineTo(width * .24, height * .34); ctx.lineTo(0, height * .34); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#c9b77d'; ctx.beginPath(); ctx.moveTo(0, height * .16); ctx.lineTo(width * .29, height * .16); ctx.lineTo(width * .39, height * .38); ctx.lineTo(width * .64, height * .38); ctx.lineTo(width * .74, height * .65); ctx.lineTo(width, height * .65); ctx.lineTo(width, height * .82); ctx.lineTo(width * .66, height * .82); ctx.lineTo(width * .56, height * .55); ctx.lineTo(width * .34, height * .55); ctx.lineTo(width * .24, height * .34); ctx.lineTo(0, height * .34); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(93, 79, 48, .35)'; ctx.lineWidth = 2; ctx.stroke();
   for (let i = 0; i < 17; i += 1) {
     const x = ((i * 137 + 43) % width); const y = ((i * 83 + 29) % height);
     if (Math.abs(x - hero.x * width) < 38 && Math.abs(y - hero.y * height) < 38) continue;
-    ctx.fillStyle = i % 3 === 0 ? '#e2d9bd' : '#716c5b';
-    ctx.beginPath(); ctx.ellipse(x, y, i % 3 === 0 ? 8 : 13, i % 3 === 0 ? 5 : 10, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = 'rgba(40, 42, 34, .45)'; ctx.stroke();
+    ctx.fillStyle = i % 3 === 0 ? '#e2d9bd' : '#716c5b'; ctx.beginPath(); ctx.ellipse(x, y, i % 3 === 0 ? 8 : 13, i % 3 === 0 ? 5 : 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(40, 42, 34, .45)'; ctx.stroke();
   }
   ctx.fillStyle = 'rgba(100, 155, 164, .78)'; ctx.beginPath(); ctx.ellipse(width * .9, height * .12, width * .09, height * .16, -.2, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = 'rgba(210, 232, 210, .55)'; ctx.lineWidth = 2;
   for (let i = 0; i < 4; i += 1) { ctx.beginPath(); ctx.moveTo(width * .84, height * (.05 + i * .06)); ctx.quadraticCurveTo(width * .9, height * (.02 + i * .06), width * .96, height * (.05 + i * .06)); ctx.stroke(); }
-
   for (const monster of monsters) {
     if (!isAlive(monster)) continue;
     const x = monster.x * width; const y = monster.y * height + Math.sin(frame / 18 + monster.x * 10) * 2;
-    drawMonster(monster, x, y);
-    ctx.font = '12px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#18251d'; ctx.fillText(monster.name, x + 1, y - 25);
-    ctx.fillStyle = '#f2edcc'; ctx.fillText(monster.name, x, y - 26);
+    drawMonster(monster, x, y); ctx.font = '12px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#18251d'; ctx.fillText(monster.name, x + 1, y - 25); ctx.fillStyle = '#f2edcc'; ctx.fillText(monster.name, x, y - 26);
   }
   if (hunting) {
     const target = monsters.find((monster) => monster.id === select.value && isAlive(monster)) || nearestAvailableMonster();
-    if (target) {
-      if (select.value !== target.id) select.value = target.id;
-      hero.x += (target.x - hero.x) * .035; hero.y += (target.y - hero.y) * .035;
-      ctx.strokeStyle = 'rgba(231, 228, 163, .8)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(hero.x * width, hero.y * height, 29 + Math.sin(frame / 8) * 3, 0, Math.PI * 2); ctx.stroke();
-    }
+    if (target) { if (select.value !== target.id) select.value = target.id; hero.x += (target.x - hero.x) * .035; hero.y += (target.y - hero.y) * .035; ctx.strokeStyle = 'rgba(231, 228, 163, .8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(hero.x * width, hero.y * height, 29 + Math.sin(frame / 8) * 3, 0, Math.PI * 2); ctx.stroke(); }
   }
-  drawHero(hero.x * width, hero.y * height + Math.sin(frame / 12) * 2);
-  ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#102016'; ctx.fillText('Pip', hero.x * width + 1, hero.y * height - 23);
-  ctx.fillStyle = '#efffd8'; ctx.fillText('Pip', hero.x * width, hero.y * height - 24);
+  drawHero(hero.x * width, hero.y * height + Math.sin(frame / 12) * 2); ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#102016'; ctx.fillText('Pip', hero.x * width + 1, hero.y * height - 23); ctx.fillStyle = '#efffd8'; ctx.fillText('Pip', hero.x * width, hero.y * height - 24);
   requestAnimationFrame(draw);
 }
-
 function attackInExistingGame() {
   const target = monsters.find((monster) => monster.id === select.value && isAlive(monster)) || nearestAvailableMonster();
   if (!target) { status.textContent = 'Todos os monstros foram derrotados. Aguardando renascimento…'; return false; }
   if (select.value !== target.id) { select.value = target.id; status.textContent = `Novo alvo: ${target.name}. Pip está indo atrás dele…`; }
   const attackButton = document.querySelector(`[data-action="fight"][data-monster-id="${CSS.escape(target.id)}"]`);
   if (!attackButton) { status.textContent = 'Carregando o sistema de combate…'; return false; }
-  attackButton.click();
-  if (status.textContent.startsWith('Pip está')) status.textContent = `Pip está caçando ${target.name}…`;
-  return true;
+  attackButton.click(); if (status.textContent.startsWith('Pip está')) status.textContent = `Pip está caçando ${target.name}…`; return true;
 }
-
 function stopHunt(message) {
-  hunting = false;
-  window.clearInterval(huntTimer);
-  huntTimer = null;
-  toggle.setAttribute('aria-pressed', 'false');
-  toggle.textContent = '▶ Iniciar caça';
-  status.textContent = message;
+  hunting = false; window.clearInterval(huntTimer); huntTimer = null;
+  toggle.setAttribute('aria-pressed', 'false'); toggle.textContent = '▶ Iniciar caça'; status.textContent = message;
 }
-
 toggle.addEventListener('click', () => {
   if (hunting) { stopHunt('Caça pausada.'); return; }
   syncWorld();
   if (!nearestAvailableMonster()) { status.textContent = 'Não há monstros no mapa. Aguarde o renascimento.'; return; }
-  hunting = true;
-  toggle.setAttribute('aria-pressed', 'true');
-  toggle.textContent = 'Ⅱ Pausar caça';
-  const target = monsters.find((monster) => monster.id === select.value && isAlive(monster)) || nearestAvailableMonster();
-  setTarget(target, `Pip está indo atrás de ${target.name}…`);
+  hunting = true; toggle.setAttribute('aria-pressed', 'true'); toggle.textContent = 'Ⅱ Pausar caça';
+  const target = monsters.find((monster) => monster.id === select.value && isAlive(monster)) || nearestAvailableMonster(); setTarget(target, `Pip está indo atrás de ${target.name}…`);
   huntTimer = window.setInterval(() => {
-    if (!hunting) return;
-    syncWorld();
+    if (!hunting) return; syncWorld();
     const hpText = [...document.querySelectorAll('.progress-label')].find((label) => label.textContent.includes('Vida'));
     const values = hpText?.textContent.match(/(\d+)\s*\/\s*(\d+)/);
     if (values && Number(values[1]) / Math.max(1, Number(values[2])) < .2) { stopHunt('Caça pausada: vida abaixo de 20%.'); return; }
     attackInExistingGame();
   }, 1400);
 });
-
-select.addEventListener('change', () => {
-  const target = monsters.find((monster) => monster.id === select.value && isAlive(monster));
-  if (target) status.textContent = hunting ? `Pip está indo atrás de ${target.name}…` : `Alvo selecionado: ${target.name}.`;
-});
-
+select.addEventListener('change', () => { const target = monsters.find((monster) => monster.id === select.value && isAlive(monster)); if (target) status.textContent = hunting ? `Pip está indo atrás de ${target.name}…` : `Alvo selecionado: ${target.name}.`; });
 window.addEventListener('resize', resizeCanvas);
 if (gameApp) new MutationObserver(syncWorld).observe(gameApp, { childList: true, subtree: true, characterData: true });
-syncWorld();
-resizeCanvas();
-requestAnimationFrame(draw);
-window.setInterval(syncWorld, 500);
+syncWorld(); resizeCanvas(); requestAnimationFrame(draw); window.setInterval(syncWorld, 500);

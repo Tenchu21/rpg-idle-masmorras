@@ -1,7 +1,6 @@
 const STORAGE_KEY = 'rpg-idle-masmorras';
 const TREE_KEY = 'rpg-idle-skill-tree-v1';
 const POINT_INTERVAL = 30;
-
 const branches = [
   { id: 'lamina', name: 'Caminho da Lâmina', icon: '⚔️', theme: 'blade', nodes: [
     { id: 'veneno', name: 'Lâmina Venenosa', skill: 'Veneno', item: { name: 'Adaga do Aprendiz', slot: 'arma', damage: 2, skill: 'Veneno', value: 8 }, description: 'Desbloqueia Veneno: dano inicial e dano contínuo.' },
@@ -17,28 +16,19 @@ const branches = [
     { id: 'passo', name: 'Passo Sombrio', skill: 'Passo Sombrio', requires: 'muralha', item: { name: 'Botas do Batedor', slot: 'botas', dodge: 0.06, skill: 'Passo Sombrio', value: 16 }, description: 'Desbloqueia Passo Sombrio: esquiva temporária.' },
   ] },
 ];
-
 const iconSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M11 7 7 16m6-9 4 9m-9 2h8"/></svg>';
 const toolbar = document.querySelector('.game-toolbar');
 const frame = document.querySelector('#world-demo .world-frame');
 const app = document.querySelector('#app');
 if (!toolbar || !frame || !app) throw new Error('Não foi possível iniciar a árvore de habilidades.');
-
 const openButton = document.createElement('button');
-openButton.type = 'button'; openButton.className = 'toolbar-button skill-tree-trigger';
-openButton.title = 'Árvore de habilidades'; openButton.setAttribute('aria-label', 'Abrir árvore de habilidades');
-openButton.setAttribute('aria-expanded', 'false'); openButton.innerHTML = `${iconSvg}<span>Habilidades</span>`;
-toolbar.append(openButton);
-
+openButton.type = 'button'; openButton.className = 'toolbar-button skill-tree-trigger'; openButton.title = 'Árvore de habilidades'; openButton.setAttribute('aria-label', 'Abrir árvore de habilidades'); openButton.setAttribute('aria-expanded', 'false'); openButton.innerHTML = `${iconSvg}<span>Habilidades</span>`; toolbar.append(openButton);
 const panel = document.createElement('section');
-panel.className = 'skill-tree-panel'; panel.hidden = true;
-panel.setAttribute('aria-label', 'Árvore de habilidades e maestria');
+panel.className = 'skill-tree-panel'; panel.hidden = true; panel.setAttribute('aria-label', 'Árvore de habilidades e maestria');
 panel.innerHTML = '<header class="skill-tree-header"><div><span class="skill-eyebrow">PROGRESSÃO DE COMBATE</span><h2>Árvore de habilidades</h2></div><button class="skill-tree-close" type="button" aria-label="Fechar árvore">×</button></header><div class="mastery-overview"><div><span>Maestria de combate</span><strong class="mastery-value">0 / 30 XP</strong></div><div class="mastery-progress"><span></span></div><div class="mastery-footer"><span class="mastery-points">0 pontos</span><span class="mastery-kills">0 abates</span></div></div><div class="skill-branches"></div><p class="skill-tree-note">Desbloqueie habilidades para adicionar equipamentos à mochila; equipe-os para usá-las em combate.</p>';
 frame.append(panel);
-
 let treeState = loadTreeState();
 let previousLogs = readLogs();
-
 function readLogs() { return [...app.querySelectorAll('.log-item')].map((entry) => entry.textContent.trim()); }
 function getNewLogs(current, previous) {
   for (let overlap = Math.min(current.length, previous.length); overlap >= 0; overlap -= 1) {
@@ -49,10 +39,8 @@ function getNewLogs(current, previous) {
   return current;
 }
 function loadTreeState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(TREE_KEY) || '{}');
-    return { masteryXp: Number.isFinite(saved.masteryXp) ? saved.masteryXp : 0, points: Number.isFinite(saved.points) ? saved.points : 0, kills: Number.isFinite(saved.kills) ? saved.kills : 0, unlocked: Array.isArray(saved.unlocked) ? saved.unlocked : [] };
-  } catch { return { masteryXp: 0, points: 0, kills: 0, unlocked: [] }; }
+  try { const saved = JSON.parse(localStorage.getItem(TREE_KEY) || '{}'); return { masteryXp: Number.isFinite(saved.masteryXp) ? saved.masteryXp : 0, points: Number.isFinite(saved.points) ? saved.points : 0, kills: Number.isFinite(saved.kills) ? saved.kills : 0, unlocked: Array.isArray(saved.unlocked) ? saved.unlocked : [] }; }
+  catch { return { masteryXp: 0, points: 0, kills: 0, unlocked: [] }; }
 }
 function saveTreeState() { try { localStorage.setItem(TREE_KEY, JSON.stringify(treeState)); } catch (error) { console.warn('Não foi possível salvar a árvore de habilidades.', error); } }
 function refreshMastery() {
@@ -69,15 +57,12 @@ function renderTree() {
     const heading = document.createElement('h3'); heading.textContent = `${branch.icon} ${branch.name}`; section.append(heading);
     const nodes = document.createElement('div'); nodes.className = 'skill-nodes';
     for (const node of branch.nodes) {
-      const unlocked = treeState.unlocked.includes(node.id);
-      const prerequisiteMet = !node.requires || treeState.unlocked.includes(node.requires);
+      const unlocked = treeState.unlocked.includes(node.id); const prerequisiteMet = !node.requires || treeState.unlocked.includes(node.requires);
       const card = document.createElement('article'); card.className = `skill-node${unlocked ? ' unlocked' : ''}${!unlocked && !prerequisiteMet ? ' locked' : ''}`;
       const title = document.createElement('strong'); title.textContent = node.name;
       const description = document.createElement('p'); description.textContent = node.description;
       const skill = document.createElement('span'); skill.className = 'skill-tag'; skill.textContent = node.skill;
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'skill-unlock-button'; button.dataset.unlockSkill = node.id;
-      button.disabled = unlocked || !prerequisiteMet || treeState.points < 1;
-      button.textContent = unlocked ? 'Desbloqueada' : !prerequisiteMet ? 'Requer nó anterior' : 'Desbloquear · 1 ponto';
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'skill-unlock-button'; button.dataset.unlockSkill = node.id; button.disabled = unlocked || !prerequisiteMet || treeState.points < 1; button.textContent = unlocked ? 'Desbloqueada' : !prerequisiteMet ? 'Requer nó anterior' : 'Desbloquear · 1 ponto';
       card.append(title, description, skill, button); nodes.append(card);
     }
     section.append(nodes); container.append(section);
@@ -89,11 +74,10 @@ function grantTrainingItem(node) {
   try { gameState = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch { return 'Não foi possível ler o progresso salvo.'; }
   if (!gameState?.hero || !Array.isArray(gameState.inventory)) return 'O jogo ainda não salvou o personagem. Faça uma ação e tente novamente.';
   if (gameState.inventory.some((item) => item.id === `maestria-${node.id}`)) return null;
-  const equippedIds = Object.values(gameState.hero.equipment || {});
-  const carried = gameState.inventory.filter((item) => !equippedIds.includes(item.id)).length;
+  const equippedIds = Object.values(gameState.hero.equipment || {}); const carried = gameState.inventory.filter((item) => !equippedIds.includes(item.id)).length;
   if (carried >= (gameState.hero.maxInventory || 20)) return 'Mochila cheia. Libere um espaço antes de desbloquear este equipamento.';
   gameState.inventory.push({ id: `maestria-${node.id}`, rarity: 'Incomum', ...node.item });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState)); } catch { return 'Não foi possível salvar o equipamento desbloqueado.'; }
   return null;
 }
 function unlockNode(nodeId) {
@@ -105,24 +89,17 @@ function unlockNode(nodeId) {
   window.dispatchEvent(new CustomEvent('rpg:skill-unlocked', { detail: { nodeId, skill: node.skill } }));
 }
 function recordKills() {
-  const current = readLogs(); const added = getNewLogs(current, previousLogs); previousLogs = current;
-  let changed = false;
+  const current = readLogs(); const added = getNewLogs(current, previousLogs); previousLogs = current; let changed = false;
   for (const text of added) {
     const reward = text.match(/derrotado!\s*\+\d+\s*ouro\s*e\s*\+(\d+)\s*XP/i);
     if (!reward) continue;
-    const before = Math.floor(treeState.masteryXp / POINT_INTERVAL);
-    treeState.kills += 1; treeState.masteryXp += Number(reward[1]);
-    const earned = Math.floor(treeState.masteryXp / POINT_INTERVAL) - before;
-    if (earned > 0) treeState.points += earned;
-    changed = true;
+    const before = Math.floor(treeState.masteryXp / POINT_INTERVAL); treeState.kills += 1; treeState.masteryXp += Number(reward[1]);
+    treeState.points += Math.floor(treeState.masteryXp / POINT_INTERVAL) - before; changed = true;
   }
   if (changed) { saveTreeState(); renderTree(); }
 }
 function toggleTree() {
-  panel.hidden = !panel.hidden;
-  openButton.classList.toggle('is-active', !panel.hidden);
-  openButton.setAttribute('aria-expanded', String(!panel.hidden));
-  if (!panel.hidden) renderTree();
+  panel.hidden = !panel.hidden; openButton.classList.toggle('is-active', !panel.hidden); openButton.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) renderTree();
 }
 openButton.addEventListener('click', toggleTree);
 panel.querySelector('.skill-tree-close').addEventListener('click', toggleTree);
