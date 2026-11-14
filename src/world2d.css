@@ -1,0 +1,72 @@
+#world-demo {
+  width: min(100% - 32px, 1520px);
+  margin: 20px auto 0;
+  overflow: hidden;
+  border: 2px solid #6f684a;
+  border-radius: 12px;
+  background: #19241d;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .38);
+}
+
+.world-frame { position: relative; width: 100%; }
+.world-canvas { display: block; width: 100%; height: clamp(300px, 52vw, 620px); image-rendering: pixelated; }
+.world-hud {
+  position: absolute;
+  inset: 12px 12px auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.world-card {
+  max-width: min(300px, 48%);
+  padding: 10px 12px;
+  border: 1px solid rgba(236, 218, 164, .65);
+  border-radius: 8px;
+  background: rgba(15, 20, 19, .88);
+  color: #f7edce;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
+  font-size: .82rem;
+}
+.world-card strong { display: block; color: #f5d477; font-size: .94rem; }
+.world-card small { color: #c2c9b9; }
+.world-status { margin-top: 5px; color: #85e7bd; }
+.world-controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(236, 218, 164, .5);
+  border-radius: 8px;
+  background: rgba(15, 20, 19, .9);
+}
+.world-controls label { color: #e8dfc7; font-size: .8rem; }
+.world-controls select, .world-controls button {
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid #756e51;
+  border-radius: 6px;
+  background: #26352c;
+  color: #f7edce;
+  font: inherit;
+}
+.world-controls button { cursor: pointer; }
+.world-controls button:hover { border-color: #85e7bd; }
+.world-controls button[aria-pressed="true"] { background: #28684d; }
+.world-hint { color: #bac6b9; font-size: .75rem; }
+@media (max-width: 600px) {
+  #world-demo { width: calc(100% - 16px); margin-top: 8px; border-radius: 8px; }
+  .world-canvas { height: 360px; }
+  .world-hud { inset: 8px 8px auto; }
+  .world-card { max-width: 65%; padding: 8px; font-size: .72rem; }
+  .world-controls { right: 8px; bottom: 8px; left: 8px; justify-content: stretch; }
+  .world-controls select, .world-controls button { flex: 1 1 130px; }
+  .world-hint { flex-basis: 100%; text-align: center; }
+}
