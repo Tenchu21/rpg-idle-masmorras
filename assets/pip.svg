@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Pip, aventureiro do Vale do Musgo</title>
+  <desc id="desc">Retrato ilustrado de um aventureiro com capuz verde e armadura de couro.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#254e49"/><stop offset="1" stop-color="#101826"/></linearGradient>
+    <linearGradient id="cloak" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#427b62"/><stop offset="1" stop-color="#193d37"/></linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#f2c99a"/><stop offset="1" stop-color="#ba805f"/></linearGradient>
+    <radialGradient id="light"><stop stop-color="#b9f1d8" stop-opacity=".35"/><stop offset="1" stop-color="#b9f1d8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="320" height="320" rx="34" fill="url(#bg)"/>
+  <circle cx="164" cy="142" r="142" fill="url(#light)"/>
+  <path d="M38 320c10-66 48-105 122-111 73 6 111 45 122 111H38Z" fill="url(#cloak)"/>
+  <path d="m94 220 65-32 69 34-28 45h-81l-25-47Z" fill="#8a6046"/>
+  <path d="m119 213 41-24 43 24-11 38h-62l-11-38Z" fill="#c49a6c"/>
+  <path d="M85 149c-9-67 17-111 76-119 59 8 85 52 75 119l-26 64c-14 25-32 38-49 38s-35-13-49-38l-27-64Z" fill="url(#skin)"/>
+  <path d="M75 143C61 63 101 20 161 17c59 2 100 46 85 126-17-24-34-43-56-56-28 18-68 26-115 25v31Z" fill="url(#cloak)"/>
+  <path d="M70 111c16-65 49-93 91-95 43 2 76 30 91 95-35-12-63-31-85-56-24 26-57 45-97 56Z" fill="#4d8c6b"/>
+  <path d="M111 148c12-10 27-10 39-2m24 0c12-8 27-8 39 2" fill="none" stroke="#49352f" stroke-width="7" stroke-linecap="round"/>
+  <path d="M124 161h16m42 0h16" stroke="#263b37" stroke-width="7" stroke-linecap="round"/>
+  <path d="M145 190c10 8 22 8 32 0" fill="none" stroke="#824d43" stroke-width="5" stroke-linecap="round"/>
+  <path d="M160 163v17" stroke="#bd8966" stroke-width="4" stroke-linecap="round"/>
+  <path d="m92 132-27 4 13 29 22-4m128-29 27 4-13 29-22-4" fill="#315d4e" stroke="#8ab796" stroke-width="4"/>
+  <path d="m113 251 47 28 48-28 31 69H82l31-69Z" fill="#243f3d"/>
+  <path d="m147 256 13 14 14-14-14-17-13 17Z" fill="#d5b66e"/>
+  <circle cx="160" cy="270" r="5" fill="#f2d785"/>
+  <path d="M62 294h196" stroke="#86c4a0" stroke-opacity=".35" stroke-width="2"/>
+</svg>
