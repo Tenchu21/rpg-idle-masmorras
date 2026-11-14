@@ -1,97 +1,35 @@
-/* Floating menu full of action buttons. */
+/* Compact, consistently aligned floating navigation and dialog surfaces. */
 .game-toolbar {
-  position: absolute;
-  z-index: 12;
-  right: 50%;
-  bottom: 16px;
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: min(90%, 1100px);
-  padding: 8px 10px;
-  border: 1px solid rgba(236, 218, 164, .42);
-  border-radius: 14px;
-  background: rgba(15, 20, 19, .94);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
-  transform: translateX(50%);
-  backdrop-filter: blur(10px);
+  position: absolute; z-index: 30; right: 50%; bottom: 14px; display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch; gap: 5px;
+  width: min(760px, calc(100% - 32px)); max-width: none; padding: 6px;
+  border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
+  background: rgba(18,25,21,.92); box-shadow: 0 10px 32px rgba(0,0,0,.32);
+  transform: translateX(50%); backdrop-filter: blur(14px);
 }
-
 .toolbar-button {
-  display: grid;
-  min-width: 72px;
-  justify-items: center;
-  gap: 3px;
-  padding: 7px 10px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
-  color: #d7ddcf;
-  cursor: pointer;
-  font: inherit;
-  font-size: .66rem;
-  transition: background .16s ease, color .16s ease, border-color .16s ease;
+  display: flex; min-width: 0; min-height: 52px; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 5px 2px; border: 1px solid transparent; border-radius: 9px;
+  background: transparent; color: #d5ddd3; cursor: pointer; font: inherit; font-size: .62rem; line-height: 1.1;
 }
-
-.toolbar-button svg, .hud-close svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.toolbar-button:hover, .toolbar-button.is-active {
-  border-color: rgba(112, 229, 193, .38);
-  background: rgba(73, 132, 103, .32);
-  color: #a7f2d4;
-}
-
-.toolbar-button:focus-visible, .hud-close:focus-visible {
-  outline: 2px solid #85e7bd;
-  outline-offset: 2px;
-}
-
-.floating-map-panel {
-  display: grid;
-  gap: 8px;
-  padding: 10px 12px;
-}
-
-.floating-map-panel .panel-kicker {
-  color: #e8cd80;
-  font-size: .62rem;
-  letter-spacing: .12em;
-}
-
-.floating-map-panel h3 {
-  margin: 0;
-  color: #f7edce;
-  font-size: 1.05rem;
-}
-
-.floating-map-panel p,
-.floating-map-panel li {
-  color: #ccd3c5;
-  font-size: .8rem;
-  line-height: 1.5;
-}
-
-.floating-map-panel ul {
-  margin: 0;
-  padding-left: 18px;
-}
-
+.toolbar-button svg, .hud-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.toolbar-button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toolbar-button:hover, .toolbar-button.is-active { border-color: rgba(112,229,193,.28); background: rgba(73,132,103,.2); color: #a7f2d4; }
+.toolbar-button:focus-visible, .hud-close:focus-visible { outline: 2px solid #85e7bd; outline-offset: 2px; }
+.game-hud-panel[hidden], .skill-tree-panel[hidden] { display: none; }
+.game-hud-panel-content [data-action] { pointer-events: auto; }
+.floating-map-panel { display: grid; gap: 8px; padding: 10px 12px; }
+.floating-map-panel .panel-kicker { color: #e8cd80; font-size: .62rem; letter-spacing: .12em; }
+.floating-map-panel h3 { margin: 0; color: #f7edce; font-size: 1.05rem; }
+.floating-map-panel p, .floating-map-panel li { color: #ccd3c5; font-size: .8rem; line-height: 1.5; }
+.floating-map-panel ul { margin: 0; padding-left: 18px; }
 @media (max-width: 760px) {
-  .game-toolbar { bottom: 18px; max-width: min(94%, 760px); gap: 4px; }
-  .toolbar-button { min-width: 62px; padding: 6px 8px; font-size: .6rem; }
+  .game-toolbar { bottom: max(10px, env(safe-area-inset-bottom)); width: calc(100% - 20px); gap: 3px; padding: 5px; }
+  .toolbar-button { min-height: 48px; font-size: .57rem; }
+  .toolbar-button svg { width: 19px; height: 19px; }
 }
-
 @media (max-width: 430px) {
-  .game-toolbar { right: 8px; left: 8px; bottom: 12px; width: auto; transform: none; }
-  .toolbar-button { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .game-toolbar { right: 50%; left: auto; width: calc(100% - 12px); transform: translateX(50%); }
+  .toolbar-button { min-width: 0; min-height: 44px; gap: 3px; padding: 4px 1px; font-size: .49rem; }
+  .toolbar-button svg { width: 17px; height: 17px; }
 }

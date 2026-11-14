@@ -1,17 +1,125 @@
-/* Separate, easy-to-tap floating menu entries for game panels. */
-#world-demo .game-toolbar { gap: 6px; }
-#world-demo .toolbar-button { min-width: 76px; }
-#world-demo .toolbar-button span { white-space: nowrap; }
-#world-demo .game-hud-panel-content > .auto-hunt-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 12px !important; }
-#world-demo .game-hud-panel-content > .hunt-status { margin: 0 0 10px; }
-#world-demo .game-hud-panel-content > .monster-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; max-height: 36vh; overflow: auto; }
-#world-demo .game-hud-panel-content > .monster-list .monster-card { min-width: 0; }
-#world-demo .game-hud-panel-content > .shop-panel,
-#world-demo .game-hud-panel-content > .inventory-panel { padding: 4px; }
-#world-demo .game-hud-panel-content > .shop-panel > .panel-header,
-#world-demo .game-hud-panel-content > .inventory-panel > .panel-header { display: none; }
-@media (max-width: 560px) {
-  #world-demo .game-toolbar { gap: 3px; }
-  #world-demo .toolbar-button { min-width: 0; }
-  #world-demo .game-hud-panel-content > .monster-list { grid-template-columns: minmax(0, 1fr); max-height: 30vh; }
+/* Clean full-screen game stage with a single, aligned floating toolbar. */
+:root { color-scheme: dark; }
+html, body { width: 100%; min-width: 320px; min-height: 100%; margin: 0; overflow: hidden; }
+body { min-height: 100dvh; background: #101914; }
+#world-demo {
+  position: fixed; inset: 0; z-index: 0; width: 100%; height: 100dvh; min-height: 0; margin: 0;
+  overflow: hidden; isolation: isolate; border: 0; border-radius: 0; background: #a9a16d;
+}
+#world-demo .world-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+#world-demo .world-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+#world-demo #app { position: absolute; z-index: 4; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; padding: 0; pointer-events: none; }
+#world-demo #app .dashboard { display: contents; }
+#world-demo #app .topbar {
+  position: absolute; z-index: 5; top: 16px; left: 16px; display: block; width: min(270px, calc(100% - 32px));
+  max-width: none; padding: 12px 14px; border: 1px solid rgba(236, 218, 164, .45); border-radius: 12px;
+  background: rgba(18, 27, 22, .82); box-shadow: 0 8px 26px rgba(0, 0, 0, .22); backdrop-filter: blur(12px); pointer-events: auto;
+}
+#world-demo #app .title-wrap { display: block; min-width: 0; }
+#world-demo #app .title-wrap::before { display: none; }
+#world-demo #app .title-wrap span { color: #d7c58c; font-size: .62rem; }
+#world-demo #app .title-wrap h1 { margin: 2px 0 0; font-size: .94rem; line-height: 1.3; }
+#world-demo #app .topbar-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 9px; }
+#world-demo #app .metric-pill { min-width: 0; padding: 5px 6px; border-color: rgba(255,255,255,.09); border-radius: 8px; background: rgba(255,255,255,.06); }
+#world-demo #app .metric-pill small { font-size: .56rem; }
+#world-demo #app .metric-pill strong { font-size: .8rem; overflow-wrap: anywhere; }
+#world-demo #app .main-grid { display: none !important; }
+
+#world-demo .world-hud { position: absolute; z-index: 3; top: 16px; right: 16px; display: grid; justify-items: end; gap: 8px; width: min(290px, calc(100% - 320px)); pointer-events: none; }
+#world-demo .world-card { max-width: 100%; padding: 9px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(18,27,22,.78); box-shadow: 0 6px 20px rgba(0,0,0,.14); backdrop-filter: blur(10px); font-size: .76rem; }
+#world-demo .world-card strong { font-size: .85rem; }
+#world-demo .world-controls {
+  position: absolute; z-index: 7; top: 112px; right: 16px; bottom: auto; left: auto; display: grid;
+  grid-template-columns: auto minmax(140px, 1fr); align-items: center; width: min(290px, calc(100% - 320px));
+  gap: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px;
+  background: rgba(18,27,22,.82); box-shadow: 0 8px 24px rgba(0,0,0,.16); backdrop-filter: blur(10px);
+}
+#world-demo .world-controls label { font-size: .72rem; }
+#world-demo .world-controls select { width: 100%; min-width: 0; }
+#world-demo .world-controls button, #world-demo .world-hint { grid-column: 1 / -1; }
+#world-demo .world-hint { text-align: center; font-size: .66rem; }
+
+/* One row, seven equal buttons: no wrapping or floating out of alignment. */
+#world-demo .game-toolbar {
+  position: absolute; z-index: 30; right: 50%; bottom: max(14px, env(safe-area-inset-bottom)); left: auto;
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: stretch; gap: 5px;
+  width: min(760px, calc(100% - 32px)); max-width: none; padding: 6px;
+  border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: rgba(18,25,21,.92);
+  box-shadow: 0 10px 32px rgba(0,0,0,.32); transform: translateX(50%); backdrop-filter: blur(14px);
+}
+#world-demo .toolbar-button {
+  display: flex; min-width: 0; min-height: 52px; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 5px 2px; border: 1px solid transparent; border-radius: 9px; background: transparent;
+  color: #d5ddd3; cursor: pointer; font: inherit; font-size: clamp(.55rem, .8vw, .66rem); line-height: 1.1;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+#world-demo .toolbar-button svg { display: block; flex: 0 0 auto; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#world-demo .toolbar-button span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#world-demo .toolbar-button:hover, #world-demo .toolbar-button.is-active { border-color: rgba(112,229,193,.25); background: rgba(73,132,103,.2); color: #a7f2d4; }
+#world-demo .toolbar-button:focus-visible, #world-demo .hud-close:focus-visible { outline: 2px solid #85e7bd; outline-offset: 2px; }
+
+#world-demo .game-hud-panel {
+  position: absolute; z-index: 25; top: 50%; right: 50%; bottom: auto; width: min(620px, calc(100% - 32px));
+  max-height: min(72dvh, 680px); overflow: hidden; transform: translate(50%, -50%);
+  border: 1px solid rgba(224,211,172,.24); border-radius: 14px; background: rgba(17,24,20,.96); color: #eef0e5;
+  box-shadow: 0 18px 56px rgba(0,0,0,.4); backdrop-filter: blur(16px);
+}
+#world-demo .game-hud-panel[hidden] { display: none; }
+#world-demo .game-hud-panel-header { position: sticky; z-index: 2; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(20,29,24,.98); }
+#world-demo .game-hud-panel-header h2 { margin: 0; color: #e6d39a; font-size: .92rem; }
+#world-demo .hud-close { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; background: rgba(255,255,255,.04); color: #e9ebdf; cursor: pointer; }
+#world-demo .hud-close svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#world-demo .game-hud-panel-content { max-height: calc(min(72dvh, 680px) - 56px); overflow: auto; padding: 14px; overscroll-behavior: contain; scrollbar-width: thin; }
+#world-demo .game-hud-panel-content .hud-source-clone { max-height: none !important; overflow: visible !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+#world-demo .game-hud-panel-content .panel-header { padding: 8px 4px; }
+#world-demo .game-hud-panel-content .panel-header h2, #world-demo .game-hud-panel-content .panel-header h3 { font-size: .8rem; }
+#world-demo .game-hud-panel-content .secondary-grid { grid-template-columns: minmax(0,1fr); }
+#world-demo .game-hud-panel-content .attribute-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 14px; }
+#world-demo .skill-tree-panel { z-index: 26; top: 50%; max-height: min(78dvh, 760px); transform: translate(-50%,-50%); }
+#world-demo .skill-branches { max-height: min(48dvh, 420px); overscroll-behavior: contain; }
+#world-demo .combat-chat { z-index: 12; right: auto; bottom: 88px; left: 16px; width: min(290px, 28vw); height: 138px; }
+#world-demo .combat-chat.is-collapsed { height: 38px; }
+
+.floating-map-panel { display: grid; gap: 8px; padding: 10px 12px; }
+.floating-map-panel .panel-kicker { color: #e8cd80; font-size: .62rem; letter-spacing: .12em; }
+.floating-map-panel h3 { margin: 0; color: #f7edce; font-size: 1.05rem; }
+.floating-map-panel p, .floating-map-panel li { color: #ccd3c5; font-size: .8rem; line-height: 1.5; }
+.floating-map-panel ul { margin: 0; padding-left: 18px; }
+
+@media (max-width: 760px) {
+  #world-demo .world-hud { top: 10px; right: 10px; width: calc(50% - 18px); }
+  #world-demo .world-controls { top: 116px; right: 10px; width: calc(50% - 18px); grid-template-columns: minmax(0,1fr); }
+  #world-demo .world-controls label { display: none; }
+  #world-demo .game-toolbar { bottom: max(10px, env(safe-area-inset-bottom)); width: calc(100% - 20px); gap: 3px; }
+  #world-demo .toolbar-button { min-height: 48px; font-size: .58rem; }
+  #world-demo .toolbar-button svg { width: 19px; height: 19px; }
+  #world-demo .game-hud-panel { width: calc(100% - 24px); max-height: 68dvh; }
+  #world-demo .game-hud-panel-content { max-height: calc(68dvh - 56px); padding: 10px; }
+  #world-demo .skill-tree-panel { width: calc(100% - 20px); max-height: 74dvh; }
+  #world-demo .skill-branches { max-height: 42dvh; }
+  #world-demo .combat-chat { bottom: 72px; left: 10px; width: min(230px, 44vw); height: 112px; }
+}
+@media (max-width: 430px) {
+  #world-demo #app .topbar { top: 10px; left: 10px; width: calc(50% - 18px); padding: 9px; }
+  #world-demo #app .title-wrap h1 { font-size: .78rem; }
+  #world-demo #app .metric-pill { padding: 4px 3px; }
+  #world-demo #app .metric-pill small { font-size: .48rem; }
+  #world-demo #app .metric-pill strong { font-size: .68rem; }
+  #world-demo .world-hud { width: calc(50% - 18px); }
+  #world-demo .world-card { padding: 7px; font-size: .62rem; }
+  #world-demo .world-card strong { font-size: .72rem; }
+  #world-demo .world-controls { top: 102px; padding: 7px; gap: 5px; }
+  #world-demo .world-controls select, #world-demo .world-controls button { min-height: 32px; padding: 4px; font-size: .62rem; }
+  #world-demo .world-hint { font-size: .54rem; }
+  #world-demo .toolbar-button { min-height: 44px; gap: 3px; padding: 4px 1px; font-size: .5rem; }
+  #world-demo .toolbar-button svg { width: 17px; height: 17px; }
+  #world-demo .combat-chat { bottom: 66px; width: min(180px, 47vw); height: 100px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  #world-demo .world-hud, #world-demo .world-controls { display: none; }
+  #world-demo .game-hud-panel { max-height: 82dvh; }
+  #world-demo .game-hud-panel-content { max-height: calc(82dvh - 56px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #world-demo *, #world-demo *::before, #world-demo *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
