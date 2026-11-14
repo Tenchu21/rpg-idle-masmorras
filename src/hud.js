@@ -5,33 +5,24 @@ if (!app || !frame) throw new Error('Não foi possível iniciar a barra de inter
 const icons = {
   status: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.5-3.5 2.8-5.3 6.5-5.3s6 1.8 6.5 5.3M19 5v6m-3-3h6"/></svg>',
   inventory: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5 5.5 20h13L20 8.5M3 5h18v4H3zM10 12h4"/></svg>',
-  talents: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>',
-  map: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20zM9 4v13.5M15 6.5V20"/></svg>',
-  forge: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h10l2 2v9l-2 2H7l-2-2V8l2-2zm2 7h6M8 4V2m8 2V2"/><path d="m12 3 2 3 2 4-4 4-4-4 2-4 2-3z"/></svg>',
-  trade: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10l2 3v8H5v-8l2-3Zm0 0V5.5A2.5 2.5 0 0 1 9.5 3h5A2.5 2.5 0 0 1 17 5.5V8M10 12h4"/></svg>',
-  hunt: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="16" cy="8" r="3"/><path d="M4 20 9 15m-4-7 6 6M8 5l11 14"/></svg>',
+  points: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M5.5 5.5l13 13m0-13-13 13"/><circle cx="12" cy="12" r="8.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
 };
 
 const toolbar = document.createElement('nav');
 toolbar.className = 'game-toolbar';
-toolbar.setAttribute('aria-label', 'Menus do jogo');
+toolbar.setAttribute('aria-label', 'Painéis do jogo');
 toolbar.innerHTML = `
-  <button type="button" class="toolbar-button" data-panel="status" aria-label="Abrir status" aria-controls="game-hud-panel" aria-expanded="false" title="Status">${icons.status}<span>Status</span></button>
+  <button type="button" class="toolbar-button" data-panel="status" aria-label="Abrir status do personagem" aria-controls="game-hud-panel" aria-expanded="false" title="Status">${icons.status}<span>Status</span></button>
   <button type="button" class="toolbar-button" data-panel="inventory" aria-label="Abrir inventário" aria-controls="game-hud-panel" aria-expanded="false" title="Inventário">${icons.inventory}<span>Inventário</span></button>
-  <button type="button" class="toolbar-button" data-panel="talents" aria-label="Abrir talentos" aria-controls="game-hud-panel" aria-expanded="false" title="Talentos">${icons.talents}<span>Talentos</span></button>
-  <button type="button" class="toolbar-button" data-panel="map" aria-label="Abrir mapa" aria-controls="game-hud-panel" aria-expanded="false" title="Mapa">${icons.map}<span>Mapa</span></button>
-  <button type="button" class="toolbar-button" data-panel="forge" aria-label="Abrir ferreiro" aria-controls="game-hud-panel" aria-expanded="false" title="Ferreiro">${icons.forge}<span>Ferreiro</span></button>
-  <button type="button" class="toolbar-button" data-panel="trade" aria-label="Abrir comércio" aria-controls="game-hud-panel" aria-expanded="false" title="Comércio">${icons.trade}<span>Comércio</span></button>
-  <button type="button" class="toolbar-button" data-panel="hunt" aria-label="Abrir caça automática" aria-controls="game-hud-panel" aria-expanded="false" title="Caça automática">${icons.hunt}<span>Caça</span></button>
-`;
+  <button type="button" class="toolbar-button" data-panel="points" aria-label="Abrir pontos de atributos" aria-controls="game-hud-panel" aria-expanded="false" title="Atributos">${icons.points}<span>Atributos</span></button>`;
 
 const panel = document.createElement('section');
 panel.className = 'game-hud-panel';
 panel.id = 'game-hud-panel';
 panel.hidden = true;
 panel.setAttribute('aria-live', 'polite');
-panel.innerHTML = '<header class="game-hud-panel-header"><h2></h2><button type="button" class="hud-close" aria-label="Fechar painel">' + icons.close + '</button></header><div class="game-hud-panel-content"></div>';
+panel.innerHTML = `<header class="game-hud-panel-header"><h2></h2><button type="button" class="hud-close" aria-label="Fechar painel">${icons.close}</button></header><div class="game-hud-panel-content"></div>`;
 frame.append(toolbar, panel);
 
 let activePanel = null;
@@ -39,26 +30,73 @@ let refreshQueued = false;
 
 function findSourcePanel(name) {
   if (name === 'status') return app.querySelector('.main-grid > section');
-  if (name === 'inventory') return app.querySelector('.inventory-panel');
-  if (name === 'forge' || name === 'trade') return app.querySelector('.shop-panel');
-  if (name === 'hunt') return app.querySelector('.action-panel');
+  if (name === 'inventory') return app.querySelector('.main-grid > aside');
   return null;
 }
 
-function buildMapPanel() {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'floating-map-panel';
-  wrapper.innerHTML = `
-    <div class="panel-kicker">REGIÃO ATUAL</div>
-    <h3>Vale do Musgo</h3>
-    <p>Vieiras, clareiras e trilhas em torno da base do aventureiro.</p>
-    <ul>
-      <li>Zona segura</li>
-      <li>Monstros em rota de caça</li>
-      <li>Expansão marcada para próximos setores</li>
-    </ul>
-  `;
-  return wrapper;
+function itemGlyph(text) {
+  if (/poção|frasco|elixir/i.test(text)) return '⚗';
+  if (/espada|adaga|cajado|machado|lâmina|arma/i.test(text)) return '⚔';
+  if (/escudo|broquel|armadura/i.test(text)) return '🛡';
+  if (/elmo|capacete|coroa/i.test(text)) return '♜';
+  if (/bota|sapato/i.test(text)) return '♧';
+  if (/anel|amuleto|colar/i.test(text)) return '◈';
+  if (/gema|cristal|joia/i.test(text)) return '◆';
+  return '✦';
+}
+
+function decorateInventory(clone) {
+  const inventory = clone.querySelector('.inventory-panel');
+  if (!inventory) return;
+
+  const items = [...inventory.querySelectorAll('.inventory-list > .item-box')];
+  const counts = new Map();
+  for (const item of items) {
+    const name = item.querySelector('.item-info strong')?.textContent.trim();
+    if (name) counts.set(name, (counts.get(name) || 0) + 1);
+  }
+
+  for (const item of inventory.querySelectorAll('.equipment-list > .slot-box, .inventory-list > .item-box')) {
+    const info = item.querySelector('.item-info, .slot-info');
+    const name = info?.querySelector('strong')?.textContent.trim() || '';
+    const details = info?.querySelector('small')?.textContent.trim() || '';
+    item.classList.add('inventory-slot-card');
+
+    const icon = document.createElement('span');
+    icon.className = 'inventory-item-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = itemGlyph(`${name} ${details}`);
+    item.prepend(icon);
+
+    const rarityMatch = details.match(/(comum|incomum|raro|épico|lendário)/i);
+    const rarity = rarityMatch?.[1]?.toLowerCase() || (item.matches('.slot-box') && name !== 'Vazio' ? 'equipado' : 'comum');
+    item.dataset.rarity = rarity.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const rarityBadge = document.createElement('span');
+    rarityBadge.className = 'inventory-item-rarity';
+    rarityBadge.textContent = rarity;
+    item.append(rarityBadge);
+
+    const quantity = counts.get(name) || 0;
+    if (item.matches('.inventory-list .item-box') && quantity > 1) {
+      const countBadge = document.createElement('span');
+      countBadge.className = 'inventory-item-count';
+      countBadge.textContent = `×${quantity}`;
+      countBadge.setAttribute('aria-label', `Quantidade ${quantity}`);
+      item.append(countBadge);
+    }
+  }
+
+  const list = inventory.querySelector('.inventory-list');
+  const capacityTag = clone.querySelector('.main-grid > aside > .panel-header .tag');
+  if (list && capacityTag) {
+    const capacity = document.createElement('div');
+    capacity.className = 'inventory-capacity';
+    capacity.innerHTML = '<span>Mochila</span>';
+    const value = document.createElement('strong');
+    value.textContent = capacityTag.textContent.trim();
+    capacity.append(value);
+    list.before(capacity);
+  }
 }
 
 function refreshPanel() {
@@ -66,71 +104,49 @@ function refreshPanel() {
   if (!activePanel) return;
   const content = panel.querySelector('.game-hud-panel-content');
   const heading = panel.querySelector('h2');
+  const source = findSourcePanel(activePanel);
+  heading.textContent = activePanel === 'status' ? 'Status do personagem' : 'Inventário';
   content.replaceChildren();
 
-  const titles = {
-    status: 'Status',
-    inventory: 'Inventário',
-    talents: 'Talentos',
-    map: 'Mapa',
-    forge: 'Ferreiro',
-    trade: 'Comércio',
-    hunt: 'Caça automática',
-  };
-  heading.textContent = titles[activePanel] || 'Menu';
-
-  if (activePanel === 'map') {
-    content.append(buildMapPanel());
-    return;
-  }
-
-  if (activePanel === 'talents') {
-    const talentTrigger = document.querySelector('.skill-tree-trigger');
-    if (talentTrigger) talentTrigger.click();
-    closePanel();
-    return;
-  }
-
-  const source = findSourcePanel(activePanel);
-  if (!source) return;
-
-  if (activePanel === 'hunt') {
-    for (const selector of ['.auto-hunt-controls', '.hunt-status', '.action-list', '.monster-list']) {
-      const section = source.querySelector(selector);
-      if (section) content.append(section.cloneNode(true));
+  if (activePanel === 'points') {
+    const sourceHero = app.querySelector('.hero-meta');
+    if (!sourceHero) return;
+    const summary = document.createElement('p');
+    summary.className = 'points-intro';
+    summary.textContent = `${sourceHero.querySelector('h3')?.textContent || 'Herói'} · distribua os pontos disponíveis nos atributos.`;
+    content.append(summary);
+    const stats = sourceHero.querySelector('.hero-stats')?.cloneNode(true);
+    if (stats) content.append(stats);
+    const sourceButtons = [...app.querySelectorAll('[data-action="boost"]')];
+    const pointActions = document.createElement('div');
+    pointActions.className = 'attribute-actions';
+    for (const button of sourceButtons) {
+      const clone = button.cloneNode(true);
+      clone.setAttribute('aria-label', `Adicionar um ponto em ${button.dataset.attribute}`);
+      pointActions.append(clone);
+    }
+    content.append(pointActions);
+    if (!sourceButtons.length) {
+      const note = document.createElement('p');
+      note.className = 'points-intro';
+      note.textContent = 'Você ainda não tem pontos disponíveis. Ganhe experiência para subir de nível.';
+      content.append(note);
     }
     return;
   }
 
-  if (activePanel === 'forge' || activePanel === 'trade') {
-    const clone = source.cloneNode(true);
-    clone.classList.add('hud-source-clone');
-    content.append(clone);
-    return;
-  }
-
+  if (!source) return;
   const clone = source.cloneNode(true);
   clone.classList.add('hud-source-clone');
+  if (activePanel === 'inventory') decorateInventory(clone);
   content.append(clone);
 }
 
 function openPanel(name) {
-  if (activePanel === name) {
-    closePanel();
-    return;
-  }
-
-  if (name === 'talents') {
-    const talentTrigger = document.querySelector('.skill-tree-trigger');
-    if (talentTrigger) {
-      talentTrigger.click();
-      return;
-    }
-  }
-
+  if (activePanel === name) { closePanel(); return; }
   activePanel = name;
   panel.hidden = false;
-  toolbar.querySelectorAll('[data-panel]').forEach((button) => {
+  toolbar.querySelectorAll('.toolbar-button').forEach((button) => {
     const selected = button.dataset.panel === name;
     button.classList.toggle('is-active', selected);
     button.setAttribute('aria-expanded', String(selected));
@@ -141,7 +157,7 @@ function openPanel(name) {
 function closePanel() {
   activePanel = null;
   panel.hidden = true;
-  toolbar.querySelectorAll('[data-panel]').forEach((button) => {
+  toolbar.querySelectorAll('.toolbar-button').forEach((button) => {
     button.classList.remove('is-active');
     button.setAttribute('aria-expanded', 'false');
   });
