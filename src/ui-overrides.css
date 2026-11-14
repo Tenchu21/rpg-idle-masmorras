@@ -1,0 +1,109 @@
+/* Final layout overrides: keep the play area large and navigation orderly. */
+:root { color-scheme: dark; }
+html, body { width: 100%; min-width: 320px; height: 100%; min-height: 100%; margin: 0; overflow: hidden; }
+body { min-height: 100dvh; }
+#world-demo {
+  position: fixed !important; inset: 0 !important; z-index: 0; width: 100% !important; height: 100dvh !important;
+  min-height: 0 !important; margin: 0 !important; overflow: hidden; border: 0 !important; border-radius: 0 !important;
+}
+#world-demo .world-frame { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+#world-demo .world-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+#world-demo #app { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; margin: 0; padding: 0; pointer-events: none; }
+#world-demo #app .dashboard { display: contents; }
+#world-demo #app .main-grid { display: none !important; }
+
+/* Small, readable status cards remain in opposite corners and leave the map open. */
+#world-demo #app .topbar {
+  position: absolute; top: 14px; left: 14px; display: block; width: min(270px, calc(50% - 24px)); max-width: none;
+  padding: 10px 12px; border: 1px solid rgba(236,218,164,.28); border-radius: 12px;
+  background: rgba(15,22,19,.78); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(12px); pointer-events: auto;
+}
+#world-demo #app .title-wrap { display: block; min-width: 0; }
+#world-demo #app .title-wrap::before { display: none; }
+#world-demo #app .title-wrap span { color: #d7c58c; font-size: .62rem; }
+#world-demo #app .title-wrap h1 { margin: 2px 0 0; font-size: .92rem; line-height: 1.25; }
+#world-demo #app .topbar-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; margin-top: 8px; }
+#world-demo #app .metric-pill { min-width: 0; padding: 4px 5px; border: 1px solid rgba(255,255,255,.08); border-radius: 7px; background: rgba(255,255,255,.06); }
+#world-demo #app .metric-pill small { font-size: .52rem; }
+#world-demo #app .metric-pill strong { font-size: .76rem; overflow-wrap: anywhere; }
+#world-demo .world-hud { position: absolute; top: 14px; right: 14px; display: grid; justify-items: end; gap: 7px; width: min(270px,calc(50% - 24px)); pointer-events: none; }
+#world-demo .world-card { max-width: 100%; padding: 8px 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; background: rgba(15,22,19,.78); box-shadow: 0 6px 18px rgba(0,0,0,.16); backdrop-filter: blur(10px); font-size: .72rem; }
+#world-demo .world-card strong { font-size: .82rem; }
+#world-demo .world-controls { top: 100px; right: 14px; width: min(270px,calc(50% - 24px)); padding: 9px; gap: 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; background: rgba(15,22,19,.82); box-shadow: 0 6px 18px rgba(0,0,0,.16); }
+#world-demo .world-controls select { min-width: 0; width: 100%; }
+
+/* Toolbar adapts to the number of menu buttons; it will never stretch into empty columns. */
+#world-demo .game-toolbar {
+  position: absolute !important; z-index: 30; right: 50% !important; bottom: max(14px,env(safe-area-inset-bottom)) !important; left: auto !important;
+  display: flex !important; flex-flow: row wrap; align-items: stretch; justify-content: center; gap: 5px;
+  width: max-content; max-width: calc(100% - 28px); padding: 6px;
+  border: 1px solid rgba(255,255,255,.16); border-radius: 13px; background: rgba(18,25,21,.94);
+  box-shadow: 0 8px 28px rgba(0,0,0,.32); transform: translateX(50%) !important; backdrop-filter: blur(14px);
+}
+#world-demo .game-toolbar .toolbar-button {
+  display: flex; flex: 1 1 72px; min-width: 68px; max-width: 94px; min-height: 50px; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px; padding: 5px 4px;
+  border: 1px solid transparent; border-radius: 9px; background: transparent; color: #dce3db;
+  font: inherit; font-size: .64rem; line-height: 1.1; cursor: pointer;
+}
+#world-demo .game-toolbar .toolbar-button svg { display: block; width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#world-demo .game-toolbar .toolbar-button span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#world-demo .game-toolbar .toolbar-button:hover,
+#world-demo .game-toolbar .toolbar-button.is-active { border-color: rgba(112,229,193,.28); background: rgba(73,132,103,.2); color: #a7f2d4; }
+#world-demo .game-toolbar .toolbar-button:focus-visible { outline: 2px solid #85e7bd; outline-offset: 2px; }
+
+/* Center panels in the available screen, with consistent scrolling and close controls. */
+#world-demo .game-hud-panel,
+#world-demo .skill-tree-panel {
+  position: absolute; top: 50% !important; right: 50% !important; bottom: auto !important; left: auto !important;
+  width: min(620px,calc(100% - 32px)); max-height: min(78dvh,720px); overflow: hidden;
+  border-radius: 14px; transform: translate(50%,-50%) !important;
+}
+#world-demo .game-hud-panel[hidden], #world-demo .skill-tree-panel[hidden] { display: none !important; }
+#world-demo .game-hud-panel-content { max-height: calc(min(78dvh,720px) - 58px); overflow: auto; overscroll-behavior: contain; }
+#world-demo .game-hud-panel-content .hud-source-clone { max-height: none !important; overflow: visible !important; }
+#world-demo .combat-chat { right: auto; bottom: 86px; left: 14px; width: min(280px,30vw); height: 132px; }
+#world-demo .combat-chat.is-collapsed { height: 38px; }
+
+/* Inventory panel is nested inside a source clone; apply the themed layout there too. */
+#world-demo .game-hud-panel:has(.inventory-panel) { width: min(700px,calc(100% - 28px)); max-height: min(84dvh,760px); }
+#world-demo .game-hud-panel:has(.inventory-panel) .game-hud-panel-content { max-height: calc(min(84dvh,760px) - 58px); }
+#world-demo .game-hud-panel-content .hud-source-clone > .inventory-panel { display: grid; gap: 12px; padding: 0 !important; border: 0 !important; background: transparent !important; box-shadow: none !important; }
+#world-demo .game-hud-panel-content .hud-source-clone > .panel-header:first-child { display: none; }
+#world-demo .game-hud-panel-content .inventory-panel .equipment-list,
+#world-demo .game-hud-panel-content .inventory-panel .inventory-list { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px !important; }
+
+@media (max-width: 700px) {
+  #world-demo #app .topbar { top: 9px; left: 9px; width: calc(50% - 15px); padding: 8px; }
+  #world-demo #app .title-wrap h1 { font-size: .78rem; }
+  #world-demo #app .metric-pill { padding: 3px; }
+  #world-demo #app .metric-pill small { font-size: .46rem; }
+  #world-demo #app .metric-pill strong { font-size: .66rem; }
+  #world-demo .world-hud { top: 9px; right: 9px; width: calc(50% - 15px); }
+  #world-demo .world-card { padding: 6px 7px; font-size: .62rem; }
+  #world-demo .world-card strong { font-size: .7rem; }
+  #world-demo .world-controls { top: 94px; right: 9px; width: calc(50% - 15px); grid-template-columns: minmax(0,1fr); gap: 5px; padding: 7px; }
+  #world-demo .world-controls label { display: none; }
+  #world-demo .world-controls select, #world-demo .world-controls button { min-height: 32px; padding: 4px; font-size: .62rem; }
+  #world-demo .world-hint { font-size: .54rem; }
+  #world-demo .game-toolbar { width: min(100% - 16px,440px); max-width: calc(100% - 16px); gap: 3px; padding: 5px; }
+  #world-demo .game-toolbar .toolbar-button { flex: 1 1 62px; min-width: 58px; min-height: 46px; font-size: .57rem; }
+  #world-demo .game-toolbar .toolbar-button svg { width: 19px; height: 19px; }
+  #world-demo .game-hud-panel, #world-demo .skill-tree-panel { width: calc(100% - 20px); max-height: 76dvh; }
+  #world-demo .game-hud-panel-content { max-height: calc(76dvh - 56px); padding: 10px; }
+  #world-demo .combat-chat { bottom: 72px; left: 9px; width: min(210px,46vw); height: 106px; }
+  #world-demo .game-hud-panel:has(.inventory-panel) { width: calc(100% - 14px); max-height: 86dvh; }
+  #world-demo .game-hud-panel:has(.inventory-panel) .game-hud-panel-content { max-height: calc(86dvh - 56px); padding: 8px; }
+  #world-demo .game-hud-panel-content .inventory-panel .equipment-list,
+  #world-demo .game-hud-panel-content .inventory-panel .inventory-list { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px !important; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  #world-demo .world-hud, #world-demo .world-controls { display: none; }
+  #world-demo .game-toolbar { bottom: 6px !important; }
+  #world-demo .combat-chat { bottom: 68px; height: 96px; }
+  #world-demo .game-hud-panel, #world-demo .skill-tree-panel { max-height: 88dvh; }
+  #world-demo .game-hud-panel-content { max-height: calc(88dvh - 56px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #world-demo *, #world-demo *::before, #world-demo *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
