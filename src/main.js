@@ -1,15 +1,8 @@
 const defaultState = {
   hero: {
-    name: 'Pip',
-    level: 1,
-    xp: 0,
-    xpNext: 20,
-    gold: 32,
-    potions: 1,
+    name: 'Pip', level: 1, xp: 0, xpNext: 20, gold: 32, potions: 1,
     attributes: { forca: 5, destreza: 5, inteligencia: 5, vitalidade: 5 },
-    hp: 60,
-    maxHp: 60,
-    maxInventory: 20,
+    hp: 100, maxHp: 100, maxInventory: 20,
     equipment: { arma: null, capacete: null, armadura: null, botas: null, acessorio1: null, acessorio2: null },
   },
   monsters: [
@@ -35,9 +28,20 @@ const defaultState = {
 };
 
 const state = structuredClone(defaultState);
+let autoHunt = false;
+let autoTargetId = 'slime';
+let autoHuntTimer = null;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('rpg-idle-masmorras', JSON.stringify(state));
+  } catch (error) {
+    console.warn('Não foi possível salvar o progresso.', error);
+  }
 }
 
 function addLog(text, type = 'info') {
@@ -66,24 +70,24 @@ function levelUpIfNeeded() {
 function usePotion() {
   if (state.hero.potions <= 0) {
     addLog('Você não tem poções suficientes.', 'warning');
-    return;
+  } else {
+    state.hero.potions -= 1;
+    state.hero.hp = Math.min(state.hero.maxHp, state.hero.hp + 40);
+    addLog('Poção de vida consumida. O herói recuperou até 40 de vida.', 'success');
   }
-
-  state.hero.potions -= 1;
-  state.hero.hp = Math.min(state.hero.maxHp, state.hero.hp + 40);
-  addLog('Poção de vida consumida. O herói recuperou 40 de vida.', 'success');
+  saveState();
   render();
 }
 
 function buyPotion() {
   if (state.hero.gold < 15) {
     addLog('Você não tem ouro suficiente para comprar uma poção.', 'warning');
-    return;
+  } else {
+    state.hero.gold -= 15;
+    state.hero.potions += 1;
+    addLog('Você comprou uma poção de vida na vila.', 'success');
   }
-
-  state.hero.gold -= 15;
-  state.hero.potions += 1;
-  addLog('Você comprou uma poção de vida na vila.', 'info');
+  saveState();
   render();
 }
 
@@ -97,7 +101,6 @@ function attackMonster(monsterId) {
 
   const heroDamage = 6 + getTotalOffense() + Math.floor(Math.random() * 7);
   monster.hp = Math.max(0, monster.hp - heroDamage);
-
   addLog(`${state.hero.name} ataca ${monster.name} e causa ${heroDamage} de dano.`, 'info');
 
   if (monster.hp <= 0) {
@@ -106,88 +109,107 @@ function attackMonster(monsterId) {
     state.hero.hp = Math.min(state.hero.maxHp, state.hero.hp + 8);
     addLog(`${monster.name} foi derrotado! Ouro +${monster.gold} e XP +${monster.xp}.`, 'success');
 
-    const dropRoll = Math.random();
-    if (dropRoll < 0.4) {
+    if (Math.random() < 0.4 && state.inventory.length < state.hero.maxInventory) {
       const lootNames = ['Adaga de Ferro', 'Botas de Couro', 'Anel do Garimpeiro', 'Amuleto de Musgo'];
       const reward = lootNames[Math.floor(Math.random() * lootNames.length)];
       state.inventory.push({
         id: `${reward.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-        name: reward,
-        slot: 'acessorio',
-        rarity: 'Incomum',
-        skill: 'Faro de Tesouro',
-        value: 18,
+        name: reward, slot: 'acessorio1', rarity: 'Incomum', skill: 'Faro de Tesouro', value: 18,
       });
-      addLog(`Você encontrou um item raro no cadáver: ${reward}.`, 'success');
+      addLog(`Você encontrou um item: ${reward}.`, 'success');
     }
 
     monster.hp = monster.maxHp;
     levelUpIfNeeded();
+  } else {
+    const enemyDamage = Math.max(2, monster.maxHp > 40 ? 9 : 5) + Math.floor(Math.random() * 4);
+    state.hero.hp = Math.max(0, state.hero.hp - enemyDamage);
+    addLog(`${monster.name} contra-ataca e causa ${enemyDamage} de dano.`, 'danger');
+
+    if (state.hero.hp <= 0) {
+      state.hero.hp = state.hero.maxHp;
+      addLog('O herói caiu, mas voltou à vila com a vida reabastecida.', 'warning');
+    }
+  }
+
+  saveState();
+  render();
+}
+
+function stopAutoHunt(message = 'Caça automática pausada.') {
+  autoHunt = false;
+  if (autoHuntTimer !== null) {
+    clearInterval(autoHuntTimer);
+    autoHuntTimer = null;
+  }
+  if (message) addLog(message, 'warning');
+  saveState();
+  render();
+}
+
+function toggleAutoHunt() {
+  if (autoHunt) {
+    stopAutoHunt('Caça automática interrompida.');
+    return;
+  }
+
+  const targetSelect = document.querySelector('#auto-target');
+  autoTargetId = targetSelect?.value || autoTargetId;
+  const target = getMonsterById(autoTargetId);
+  if (!target) {
+    addLog('Escolha um monstro válido para iniciar a caça.', 'warning');
     render();
     return;
   }
 
-  const enemyDamage = Math.max(2, monster.maxHp > 40 ? 9 : 5) + Math.floor(Math.random() * 4);
-  state.hero.hp = Math.max(0, state.hero.hp - enemyDamage);
-  addLog(`${monster.name} contra-ataca e causa ${enemyDamage} de dano.`, 'danger');
-
-  if (state.hero.hp <= 0) {
-    state.hero.hp = state.hero.maxHp;
-    addLog('O herói caiu, mas voltou à vila com a vida reabastecida.', 'warning');
-  }
-
+  autoHunt = true;
+  addLog(`Caça automática iniciada contra ${target.name}. Ela pausa quando a vida fica baixa.`, 'success');
+  autoHuntTimer = window.setInterval(() => {
+    if (!autoHunt) return;
+    const maxHp = 50 + state.hero.attributes.vitalidade * 10;
+    if (state.hero.hp <= maxHp * 0.25) {
+      stopAutoHunt('Caça automática pausada: vida abaixo de 25%. Recupere-se antes de continuar.');
+      return;
+    }
+    attackMonster(autoTargetId);
+  }, 1200);
+  saveState();
   render();
 }
 
 function equipItem(itemId) {
   const itemIndex = state.inventory.findIndex((item) => item.id === itemId);
   if (itemIndex === -1) return;
-
   const item = state.inventory[itemIndex];
   const slot = item.slot;
-  const equipped = state.hero.equipment[slot];
-
-  if (equipped) {
-    state.inventory.splice(itemIndex, 1);
-    state.inventory.push(equipped);
+  const equippedId = state.hero.equipment[slot];
+  if (equippedId) {
+    const equipped = state.inventory.find((entry) => entry.id === equippedId);
+    if (equipped) state.inventory.splice(state.inventory.indexOf(equipped), 1);
+    state.inventory.push(item);
   } else {
     state.inventory.splice(itemIndex, 1);
   }
-
   state.hero.equipment[slot] = item.id;
   addLog(`${item.name} foi equipado em ${slot}.`, 'success');
+  saveState();
   render();
 }
 
 function sellItem(itemId) {
   const itemIndex = state.inventory.findIndex((item) => item.id === itemId);
   if (itemIndex === -1) return;
-
   const item = state.inventory[itemIndex];
   state.hero.gold += item.value;
   state.inventory.splice(itemIndex, 1);
   addLog(`${item.name} foi vendido por ${item.value} ouro.`, 'info');
-  render();
-}
-
-function boostAttribute(key) {
-  const availablePoints = state.hero.level - 1;
-  if (availablePoints <= 0) {
-    addLog('Você não tem pontos de atributo disponíveis.', 'warning');
-    return;
-  }
-
-  state.hero.attributes[key] += 1;
-  state.hero.maxHp = 50 + state.hero.attributes.vitalidade * 10;
-  state.hero.hp = state.hero.maxHp;
-  addLog(`${key} aumentou para ${state.hero.attributes[key]}.`, 'success');
+  saveState();
   render();
 }
 
 function render() {
   const app = document.querySelector('#app');
   const hero = state.hero;
-
   const heroMaxHp = 50 + hero.attributes.vitalidade * 10;
   const hpPercent = clamp((hero.hp / heroMaxHp) * 100, 0, 100);
   const xpPercent = clamp((hero.xp / hero.xpNext) * 100, 0, 100);
@@ -195,219 +217,98 @@ function render() {
   app.innerHTML = `
     <div class="dashboard">
       <header class="topbar">
-        <div class="title-wrap">
-          <span>RPG Idle</span>
-          <h1>Masmorras do Vale do Musgo</h1>
-        </div>
-
+        <div class="title-wrap"><span>RPG Idle</span><h1>Masmorras do Vale do Musgo</h1></div>
         <div class="topbar-metrics">
-          <div class="metric-pill">
-            <small>Ouro</small>
-            <strong>${hero.gold}</strong>
-          </div>
-          <div class="metric-pill">
-            <small>XP</small>
-            <strong>${hero.xp}/${hero.xpNext}</strong>
-          </div>
-          <div class="metric-pill">
-            <small>Poções</small>
-            <strong>${hero.potions}</strong>
-          </div>
+          <div class="metric-pill"><small>Ouro</small><strong>${hero.gold}</strong></div>
+          <div class="metric-pill"><small>XP</small><strong>${hero.xp}/${hero.xpNext}</strong></div>
+          <div class="metric-pill"><small>Poções</small><strong>${hero.potions}</strong></div>
         </div>
       </header>
-
       <main class="main-grid">
         <section class="panel">
-          <div class="panel-header">
-            <h2>Herói</h2>
-            <span class="tag rarity">Nível ${hero.level}</span>
-          </div>
-
+          <div class="panel-header"><h2>Herói</h2><span class="tag rarity">Nível ${hero.level}</span></div>
           <div class="hero-panel">
             <div class="hero-card">
               <div class="avatar" aria-label="Avatar do herói">⚔️</div>
-
               <div class="hero-meta">
-                <h3>${hero.name}</h3>
-                <p>Sem classe • explorador do vale</p>
-
+                <h3>${hero.name}</h3><p>Sem classe • explorador do vale</p>
                 <div class="hero-stats">
-                  <div class="stat-box">
-                    <span>FOR</span>
-                    <strong>${hero.attributes.forca}</strong>
-                  </div>
-                  <div class="stat-box">
-                    <span>DES</span>
-                    <strong>${hero.attributes.destreza}</strong>
-                  </div>
-                  <div class="stat-box">
-                    <span>INT</span>
-                    <strong>${hero.attributes.inteligencia}</strong>
-                  </div>
-                  <div class="stat-box">
-                    <span>VIT</span>
-                    <strong>${hero.attributes.vitalidade}</strong>
-                  </div>
+                  <div class="stat-box"><span>FOR</span><strong>${hero.attributes.forca}</strong></div>
+                  <div class="stat-box"><span>DES</span><strong>${hero.attributes.destreza}</strong></div>
+                  <div class="stat-box"><span>INT</span><strong>${hero.attributes.inteligencia}</strong></div>
+                  <div class="stat-box"><span>VIT</span><strong>${hero.attributes.vitalidade}</strong></div>
                 </div>
               </div>
             </div>
-
-            <div class="progress-block">
-              <div class="progress-label">
-                <span>Vida</span>
-                <span>${hero.hp}/${heroMaxHp}</span>
-              </div>
-              <div class="progress-bar hp"><span style="width: ${hpPercent}%"></span></div>
-            </div>
-
-            <div class="progress-block">
-              <div class="progress-label">
-                <span>Experiência</span>
-                <span>${hero.xp}/${hero.xpNext}</span>
-              </div>
-              <div class="progress-bar"><span style="width: ${xpPercent}%"></span></div>
-            </div>
-
+            <div class="progress-block"><div class="progress-label"><span>Vida</span><span>${hero.hp}/${heroMaxHp}</span></div><div class="progress-bar hp"><span style="width:${hpPercent}%"></span></div></div>
+            <div class="progress-block"><div class="progress-label"><span>Experiência</span><span>${hero.xp}/${hero.xpNext}</span></div><div class="progress-bar"><span style="width:${xpPercent}%"></span></div></div>
             <div class="secondary-grid">
               <div class="panel action-panel">
-                <div class="panel-header">
-                  <h3>Ações</h3>
+                <div class="panel-header"><h3>Ações</h3></div>
+                <div class="auto-hunt-controls" style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  <label for="auto-target" class="sr-only">Monstro para caça automática</label>
+                  <select id="auto-target" aria-label="Escolha o monstro para caça automática" ${autoHunt ? 'disabled' : ''}>
+                    ${state.monsters.map((monster) => `<option value="${monster.id}" ${monster.id === autoTargetId ? 'selected' : ''}>${monster.emoji} ${monster.name}</option>`).join('')}
+                  </select>
+                  <button class="action-btn ${autoHunt ? 'warning' : 'primary'}" data-action="auto-hunt" aria-pressed="${autoHunt}">${autoHunt ? '⏸ Pausar caça' : '▶ Caça automática'}</button>
                 </div>
-
-                <ul class="action-list" style="margin-top: 14px;">
-                  <li><button class="action-btn primary" data-action="attack">Caçar</button></li>
+                <p class="hunt-status" role="status" aria-live="polite" style="color:var(--muted); font-size:.82rem; margin:8px 0 0;">${autoHunt ? 'Caçando automaticamente — pausa ao chegar a 25% de vida.' : 'Escolha um monstro e inicie a caça automática.'}</p>
+                <ul class="action-list" style="margin-top:14px;">
+                  <li><button class="action-btn primary" data-action="attack">Caçar uma vez</button></li>
                   <li><button class="action-btn warning" data-action="potion">Usar poção</button></li>
                   <li><button class="action-btn" data-action="shop">Comprar</button></li>
                 </ul>
-
                 <div class="monster-list">
                   ${state.monsters.map((monster) => `
                     <div class="monster-card" data-monster-id="${monster.id}">
-                      <div class="monster-name">
-                        <strong>${monster.emoji} ${monster.name}</strong>
-                        <span>${monster.hp}/${monster.maxHp} HP • ${monster.gold} ouro</span>
-                      </div>
-                      <div class="monster-meta">
-                        <span class="monster-badge">+${monster.xp} XP</span>
-                        <button class="action-btn" data-action="fight" data-monster-id="${monster.id}">Atacar</button>
-                      </div>
-                    </div>
-                  `).join('')}
+                      <div class="monster-name"><strong>${monster.emoji} ${monster.name}</strong><span>${monster.hp}/${monster.maxHp} HP • ${monster.gold} ouro</span></div>
+                      <div class="monster-meta"><span class="monster-badge">+${monster.xp} XP</span><button class="action-btn" data-action="fight" data-monster-id="${monster.id}">Atacar</button></div>
+                    </div>`).join('')}
                 </div>
               </div>
-
               <div class="panel shop-panel">
-                <div class="panel-header">
-                  <h3>Loja da vila</h3>
-                </div>
-                <ul class="shop-list" style="margin-top: 14px; display: grid; gap: 10px;">
-                  ${state.shop.map((item) => `
-                    <li class="item-box">
-                      <div class="item-info">
-                        <strong>${item.name}</strong>
-                        <small>${item.type === 'potion' ? 'Recupera vida' : 'Item de combate'}</small>
-                      </div>
-                      <button class="shop-btn" data-action="buy" data-buy-id="${item.id}">${item.price} ouro</button>
-                    </li>
-                  `).join('')}
+                <div class="panel-header"><h3>Loja da vila</h3></div>
+                <ul class="shop-list" style="margin-top:14px; display:grid; gap:10px;">
+                  ${state.shop.map((item) => `<li class="item-box"><div class="item-info"><strong>${item.name}</strong><small>${item.type === 'potion' ? 'Recupera vida' : 'Item de combate'}</small></div><button class="shop-btn" data-action="buy" data-buy-id="${item.id}">${item.price} ouro</button></li>`).join('')}
                 </ul>
               </div>
             </div>
           </div>
         </section>
-
         <aside class="panel">
-          <div class="panel-header">
-            <h2>Inventário</h2>
-            <span class="tag">${state.inventory.length}/${hero.maxInventory}</span>
-          </div>
-
+          <div class="panel-header"><h2>Inventário</h2><span class="tag">${state.inventory.length}/${hero.maxInventory}</span></div>
           <div class="inventory-panel">
-            <div class="panel-header" style="padding: 0 0 12px; border-bottom: 0; margin-bottom: 12px;">
-              <h3>Equipamentos</h3>
-            </div>
-
-            <ul class="equipment-list" style="display: grid; gap: 10px;">
+            <div class="panel-header" style="padding:0 0 12px;border:0;margin-bottom:12px;"><h3>Equipamentos</h3></div>
+            <ul class="equipment-list" style="display:grid;gap:10px;">
               ${['arma', 'capacete', 'armadura', 'botas', 'acessorio1', 'acessorio2'].map((slot) => {
-                const itemId = hero.equipment[slot];
-                const item = state.inventory.find((entry) => entry.id === itemId);
-                return `
-                  <li class="slot-box">
-                    <div class="slot-info">
-                      <strong>${slot}</strong>
-                      <small>${item ? item.name : 'Vazio'}</small>
-                    </div>
-                  </li>
-                `;
+                const item = state.inventory.find((entry) => entry.id === hero.equipment[slot]);
+                return `<li class="slot-box"><div class="slot-info"><strong>${slot}</strong><small>${item ? item.name : 'Vazio'}</small></div></li>`;
               }).join('')}
             </ul>
-
-            <div class="panel-header" style="padding: 0 0 12px; border-bottom: 0; margin: 18px 0 12px;">
-              <h3>Itens</h3>
-            </div>
-
-            <ul class="inventory-list" style="display: grid; gap: 10px;">
-              ${state.inventory.map((item) => `
-                <li class="item-box">
-                  <div class="item-info">
-                    <strong>${item.name}</strong>
-                    <small>${item.skill} • ${item.rarity}</small>
-                  </div>
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
-                    <button class="inventory-btn" data-action="equip" data-item-id="${item.id}">Equipar</button>
-                    <button class="inventory-btn" data-action="sell" data-item-id="${item.id}">Vender</button>
-                  </div>
-                </li>
-              `).join('')}
+            <div class="panel-header" style="padding:0 0 12px;border:0;margin:18px 0 12px;"><h3>Itens</h3></div>
+            <ul class="inventory-list" style="display:grid;gap:10px;">
+              ${state.inventory.map((item) => `<li class="item-box"><div class="item-info"><strong>${item.name}</strong><small>${item.skill} • ${item.rarity}</small></div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;"><button class="inventory-btn" data-action="equip" data-item-id="${item.id}">Equipar</button><button class="inventory-btn" data-action="sell" data-item-id="${item.id}">Vender</button></div></li>`).join('')}
             </ul>
           </div>
-
-          <div class="panel-header" style="margin-top: 18px;">
-            <h2>Registro</h2>
-          </div>
-
-          <div class="log-panel">
-            <ul class="log-list">
-              ${state.log.map((entry) => `<li class="log-item"><strong>${entry.type === 'success' ? '✔' : entry.type === 'danger' ? '⚠' : '•'}</strong> ${entry.text}</li>`).join('')}
-            </ul>
-          </div>
+          <div class="panel-header" style="margin-top:18px;"><h2>Registro</h2></div>
+          <div class="log-panel"><ul class="log-list">${state.log.map((entry) => `<li class="log-item"><strong>${entry.type === 'success' ? '✔' : entry.type === 'danger' ? '⚠' : '•'}</strong> ${entry.text}</li>`).join('')}</ul></div>
         </aside>
       </main>
-    </div>
-  `;
+    </div>`;
 
   document.querySelectorAll('[data-action]').forEach((button) => {
-    button.addEventListener('click', (event) => {
-      const action = button.dataset.action;
-
-      if (action === 'fight') {
-        attackMonster(button.dataset.monsterId);
-      }
-
-      if (action === 'buy') {
-        const buyId = button.dataset.buyId;
-        if (buyId === 'pocao') {
-          buyPotion();
-        }
-      }
-
-      if (action === 'equip') {
-        equipItem(button.dataset.itemId);
-      }
-
-      if (action === 'sell') {
-        sellItem(button.dataset.itemId);
-      }
-
-      if (action === 'potion') {
-        usePotion();
-      }
-
+    button.addEventListener('click', () => {
+      const { action } = button.dataset;
+      if (action === 'fight') attackMonster(button.dataset.monsterId);
+      if (action === 'buy' && button.dataset.buyId === 'pocao') buyPotion();
+      if (action === 'equip') equipItem(button.dataset.itemId);
+      if (action === 'sell') sellItem(button.dataset.itemId);
+      if (action === 'potion') usePotion();
+      if (action === 'auto-hunt') toggleAutoHunt();
       if (action === 'shop') {
         addLog('A vila está aberta. Poções e itens de reforço estão disponíveis.', 'info');
         render();
       }
-
       if (action === 'attack') {
         const monster = state.monsters[Math.floor(Math.random() * state.monsters.length)];
         attackMonster(monster.id);
@@ -416,50 +317,25 @@ function render() {
   });
 }
 
-render();
-
-function init() {
-  state.hero.maxHp = 50 + state.hero.attributes.vitalidade * 10;
-  state.hero.hp = state.hero.maxHp;
-  state.hero.xpNext = getNextLevelXp(state.hero.level);
-}
-
-init();
-render();
-
-window.addEventListener('beforeunload', () => {
-  localStorage.setItem('rpg-idle-masmorras', JSON.stringify(state));
-});
-
 try {
   const saved = localStorage.getItem('rpg-idle-masmorras');
   if (saved) {
     const parsed = JSON.parse(saved);
     Object.assign(state, parsed);
-    state.hero.maxHp = 50 + state.hero.attributes.vitalidade * 10;
-    state.hero.hp = Math.min(state.hero.hp, state.hero.maxHp);
-    state.hero.xpNext = getNextLevelXp(state.hero.level);
-    render();
   }
 } catch (error) {
   console.warn('Não foi possível restaurar o progresso salvo.', error);
 }
 
-setInterval(() => {
+state.hero.maxHp = 50 + state.hero.attributes.vitalidade * 10;
+state.hero.hp = clamp(state.hero.hp, 0, state.hero.maxHp);
+state.hero.xpNext = getNextLevelXp(state.hero.level);
+render();
+
+window.setInterval(() => {
   if (state.hero.hp < state.hero.maxHp) {
     state.hero.hp = Math.min(state.hero.maxHp, state.hero.hp + 1);
+    saveState();
+    render();
   }
 }, 1300);
-
-setInterval(() => {
-  render();
-}, 5000);
-
-// Ajuste visual para refletir o progresso do herói em tempo real.
-setInterval(() => {
-  if (state.hero.hp > 0) {
-    state.hero.hp = Math.min(state.hero.maxHp, state.hero.hp + 1);
-  }
-}, 3000);
-
-console.log('Interface renovada do RPG Idle de Masmorras carregada.');
