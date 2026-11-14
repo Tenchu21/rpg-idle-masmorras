@@ -3,87 +3,64 @@ const frame = document.querySelector('#world-demo .world-frame');
 if (!app || !frame) throw new Error('Não foi possível iniciar a barra de interface.');
 
 const icons = {
-  status: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.5-3.5 2.8-5.3 6.5-5.3s6 1.8 6.5 5.3M19 5v6m-3-3h6"/></svg>',
+  hunt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 9 15m-4-7 6 6m5-12 4 4m-6 7 6 6M8 5l11 14M5 19l4-4"/><circle cx="16" cy="8" r="3"/></svg>',
   inventory: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5 5.5 20h13L20 8.5M3 5h18v4H3zM10 12h4"/></svg>',
-  points: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M5.5 5.5l13 13m0-13-13 13"/><circle cx="12" cy="12" r="8.5"/></svg>',
+  shop: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.3 11H5.3L4 9Zm-1-4h18l-1 4H4L3 5Zm6 8v7m6-7v7"/><path d="M9 5a3 3 0 0 1 6 0"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
 };
 
 const toolbar = document.createElement('nav');
 toolbar.className = 'game-toolbar';
-toolbar.setAttribute('aria-label', 'Painéis do jogo');
+toolbar.setAttribute('aria-label', 'Menus do jogo');
 toolbar.innerHTML = `
-  <button type="button" class="toolbar-button" data-panel="status" aria-label="Abrir status do personagem" aria-controls="game-hud-panel" aria-expanded="false" title="Status">
-    ${icons.status}<span>Status</span>
-  </button>
-  <button type="button" class="toolbar-button" data-panel="inventory" aria-label="Abrir inventário" aria-controls="game-hud-panel" aria-expanded="false" title="Inventário">
-    ${icons.inventory}<span>Inventário</span>
-  </button>
-  <button type="button" class="toolbar-button" data-panel="points" aria-label="Abrir pontos de atributos" aria-controls="game-hud-panel" aria-expanded="false" title="Atributos">
-    ${icons.points}<span>Atributos</span>
-  </button>`;
+  <button type="button" class="toolbar-button" data-panel="hunt" aria-label="Abrir caça automática" aria-controls="game-hud-panel" aria-expanded="false" title="Caça automática">${icons.hunt}<span>Caça</span></button>
+  <button type="button" class="toolbar-button" data-panel="inventory" aria-label="Abrir inventário" aria-controls="game-hud-panel" aria-expanded="false" title="Inventário">${icons.inventory}<span>Inventário</span></button>
+  <button type="button" class="toolbar-button" data-panel="shop" aria-label="Abrir loja" aria-controls="game-hud-panel" aria-expanded="false" title="Loja">${icons.shop}<span>Loja</span></button>`;
 
 const panel = document.createElement('section');
 panel.className = 'game-hud-panel';
 panel.id = 'game-hud-panel';
 panel.hidden = true;
 panel.setAttribute('aria-live', 'polite');
-panel.innerHTML = '<header class="game-hud-panel-header"><h2></h2><button type="button" class="hud-close" aria-label="Fechar painel">' + icons.close + '</button></header><div class="game-hud-panel-content"></div>';
-
+panel.innerHTML = `<header class="game-hud-panel-header"><h2></h2><button type="button" class="hud-close" aria-label="Fechar painel">${icons.close}</button></header><div class="game-hud-panel-content"></div>`;
 frame.append(toolbar, panel);
 
 let activePanel = null;
 let refreshQueued = false;
 
-function findSourcePanel(name) {
-  if (name === 'status') return app.querySelector('.main-grid > section');
-  if (name === 'inventory') return app.querySelector('.main-grid > aside');
+function findSource(name) {
+  if (name === 'hunt') return app.querySelector('.action-panel');
+  if (name === 'inventory') return app.querySelector('.inventory-panel');
+  if (name === 'shop') return app.querySelector('.shop-panel');
   return null;
 }
 
 function refreshPanel() {
   refreshQueued = false;
   if (!activePanel) return;
-
   const content = panel.querySelector('.game-hud-panel-content');
   const heading = panel.querySelector('h2');
-  const source = findSourcePanel(activePanel);
-  heading.textContent = activePanel === 'status' ? 'Status do personagem' : activePanel === 'inventory' ? 'Inventário e equipamentos' : 'Pontos de atributos';
   content.replaceChildren();
 
-  if (activePanel === 'points') {
-    const sourceHero = app.querySelector('.hero-meta');
-    if (!sourceHero) return;
-    const summary = document.createElement('p');
-    summary.className = 'points-intro';
-    summary.textContent = `${sourceHero.querySelector('h3')?.textContent || 'Herói'} · distribua os pontos disponíveis nos atributos.`;
-    content.append(summary);
-
-    const stats = sourceHero.querySelector('.hero-stats')?.cloneNode(true);
-    if (stats) content.append(stats);
-
-    const sourceButtons = [...app.querySelectorAll('[data-action="boost"]')];
-    const pointActions = document.createElement('div');
-    pointActions.className = 'attribute-actions';
-    for (const button of sourceButtons) {
-      const clone = button.cloneNode(true);
-      clone.setAttribute('aria-label', `Adicionar um ponto em ${button.dataset.attribute}`);
-      pointActions.append(clone);
-    }
-    content.append(pointActions);
-    if (!sourceButtons.length) {
-      const note = document.createElement('p');
-      note.className = 'points-intro';
-      note.textContent = 'Você ainda não tem pontos disponíveis. Ganhe experiência para subir de nível.';
-      content.append(note);
-    }
-    return;
-  }
-
+  const titles = { hunt: 'Caça automática', inventory: 'Inventário', shop: 'Loja' };
+  heading.textContent = titles[activePanel];
+  const source = findSource(activePanel);
   if (!source) return;
-  const clone = source.cloneNode(true);
-  clone.classList.add('hud-source-clone');
-  content.append(clone);
+
+  if (activePanel === 'hunt') {
+    const controls = source.querySelector('.auto-hunt-controls');
+    const huntStatus = source.querySelector('.hunt-status');
+    const monsters = source.querySelector('.monster-list');
+    if (controls) content.append(controls.cloneNode(true));
+    if (huntStatus) content.append(huntStatus.cloneNode(true));
+    if (monsters) content.append(monsters.cloneNode(true));
+  } else {
+    const section = activePanel === 'inventory' ? source : source;
+    content.append(section.cloneNode(true));
+  }
+  content.querySelectorAll('[data-action]').forEach((button) => {
+    button.addEventListener('click', () => forwardAction(button));
+  });
 }
 
 function openPanel(name) {
@@ -91,9 +68,12 @@ function openPanel(name) {
     closePanel();
     return;
   }
+  // Keep the skill tree and other popups from stacking on top of each other.
+  const skillButton = toolbar.querySelector('.skill-tree-trigger');
+  if (skillButton?.getAttribute('aria-expanded') === 'true') skillButton.click();
   activePanel = name;
   panel.hidden = false;
-  toolbar.querySelectorAll('.toolbar-button').forEach((button) => {
+  toolbar.querySelectorAll('[data-panel]').forEach((button) => {
     const selected = button.dataset.panel === name;
     button.classList.toggle('is-active', selected);
     button.setAttribute('aria-expanded', String(selected));
@@ -104,18 +84,16 @@ function openPanel(name) {
 function closePanel() {
   activePanel = null;
   panel.hidden = true;
-  toolbar.querySelectorAll('.toolbar-button').forEach((button) => {
+  toolbar.querySelectorAll('[data-panel]').forEach((button) => {
     button.classList.remove('is-active');
     button.setAttribute('aria-expanded', 'false');
   });
 }
 
 function forwardAction(button) {
-  const action = button.dataset.action;
-  if (!action) return;
   const fields = ['itemId', 'slot', 'buyId', 'monsterId', 'attribute'];
   const original = [...app.querySelectorAll('[data-action]')].find((candidate) =>
-    candidate.dataset.action === action && fields.every((field) => candidate.dataset[field] === button.dataset[field])
+    candidate.dataset.action === button.dataset.action && fields.every((field) => candidate.dataset[field] === button.dataset[field])
   );
   original?.click();
 }
@@ -129,11 +107,9 @@ panel.addEventListener('click', (event) => {
   const button = event.target.closest('[data-action]');
   if (button) forwardAction(button);
 });
-
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && activePanel) closePanel();
 });
-
 new MutationObserver(() => {
   if (activePanel && !refreshQueued) {
     refreshQueued = true;
