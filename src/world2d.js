@@ -1,6 +1,8 @@
 const root = document.querySelector('#world-demo');
 if (!root) throw new Error('Não foi possível iniciar o campo 2D.');
 
+// Keep the full game UI and mount it over the map as an in-world HUD.
+const gameApp = document.querySelector('#app');
 root.innerHTML = `
   <div class="world-frame">
     <canvas class="world-canvas" aria-label="Mapa 2D do Vale do Musgo"></canvas>
@@ -15,6 +17,8 @@ root.innerHTML = `
       <span class="world-hint">O combate usa as regras atuais do jogo.</span>
     </div>
   </div>`;
+const frameRoot = root.querySelector('.world-frame');
+if (gameApp) frameRoot.append(gameApp);
 
 const canvas = root.querySelector('canvas');
 const ctx = canvas.getContext('2d');
@@ -33,7 +37,6 @@ let hero = { x: .5, y: .52, level: 1 };
 let hunting = false;
 let huntTimer;
 let frame = 0;
-let lastHuntAt = 0;
 
 function findGameMonsters() {
   const cards = [...document.querySelectorAll('.monster-card[data-monster-id]')];
@@ -89,8 +92,6 @@ function draw() {
   if (!width || !height) return;
   frame += 1;
   ctx.clearRect(0, 0, width, height);
-
-  // Pixel-art grass and a winding dirt trail.
   ctx.fillStyle = '#a9a16d'; ctx.fillRect(0, 0, width, height);
   const tile = Math.max(12, Math.round(width / 62));
   for (let y = 0; y < height; y += tile) {
@@ -107,8 +108,6 @@ function draw() {
   ctx.fillStyle = '#c9b77d';
   ctx.beginPath(); ctx.moveTo(0, height * .16); ctx.lineTo(width * .29, height * .16); ctx.lineTo(width * .39, height * .38); ctx.lineTo(width * .64, height * .38); ctx.lineTo(width * .74, height * .65); ctx.lineTo(width, height * .65); ctx.lineTo(width, height * .82); ctx.lineTo(width * .66, height * .82); ctx.lineTo(width * .56, height * .55); ctx.lineTo(width * .34, height * .55); ctx.lineTo(width * .24, height * .34); ctx.lineTo(0, height * .34); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(93, 79, 48, .35)'; ctx.lineWidth = 2; ctx.stroke();
-
-  // Stones, shrubs, and a simple water patch make the test map feel like a place.
   for (let i = 0; i < 17; i += 1) {
     const x = ((i * 137 + 43) % width);
     const y = ((i * 83 + 29) % height);
@@ -129,7 +128,6 @@ function draw() {
     ctx.fillText(monster.name, x + 1, y - 22 + 1);
     ctx.fillStyle = '#f2edcc'; ctx.fillText(monster.name, x, y - 23);
   }
-
   if (hunting) {
     const target = monsters.find((monster) => monster.id === select.value) || monsters[0];
     hero.x += (target.x - hero.x) * .035;
@@ -174,8 +172,8 @@ toggle.addEventListener('click', () => {
   status.textContent = `Pip está caçando ${monsters.find((monster) => monster.id === select.value)?.name || 'um monstro'}…`;
   huntTimer = window.setInterval(() => {
     if (!hunting) return;
-    const hpText = document.querySelector('.progress-label');
-    if (hpText && hpText.textContent.includes('Vida')) {
+    const hpText = [...document.querySelectorAll('.progress-label')].find((label) => label.textContent.includes('Vida'));
+    if (hpText) {
       const values = hpText.textContent.match(/(\d+)\s*\/\s*(\d+)/);
       if (values && Number(values[1]) / Math.max(1, Number(values[2])) < .2) {
         stopHunt('Caça pausada: vida abaixo de 20%.');

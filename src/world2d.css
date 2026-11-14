@@ -1,6 +1,9 @@
 #world-demo {
+  position: relative;
   width: min(100% - 32px, 1520px);
-  margin: 20px auto 0;
+  height: clamp(620px, 74vh, 880px);
+  min-height: 620px;
+  margin: 20px auto;
   overflow: hidden;
   border: 2px solid #6f684a;
   border-radius: 12px;
@@ -8,10 +11,11 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, .38);
 }
 
-.world-frame { position: relative; width: 100%; }
-.world-canvas { display: block; width: 100%; height: clamp(300px, 52vw, 620px); image-rendering: pixelated; }
+.world-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.world-canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .world-hud {
   position: absolute;
+  z-index: 3;
   inset: 12px 12px auto;
   display: flex;
   align-items: flex-start;
@@ -24,7 +28,7 @@
   padding: 10px 12px;
   border: 1px solid rgba(236, 218, 164, .65);
   border-radius: 8px;
-  background: rgba(15, 20, 19, .88);
+  background: rgba(15, 20, 19, .9);
   color: #f7edce;
   box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
   font-size: .82rem;
@@ -34,6 +38,7 @@
 .world-status { margin-top: 5px; color: #85e7bd; }
 .world-controls {
   position: absolute;
+  z-index: 8;
   right: 12px;
   bottom: 12px;
   left: 12px;
@@ -45,7 +50,8 @@
   padding: 9px;
   border: 1px solid rgba(236, 218, 164, .5);
   border-radius: 8px;
-  background: rgba(15, 20, 19, .9);
+  background: rgba(15, 20, 19, .94);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
 }
 .world-controls label { color: #e8dfc7; font-size: .8rem; }
 .world-controls select, .world-controls button {
@@ -61,12 +67,137 @@
 .world-controls button:hover { border-color: #85e7bd; }
 .world-controls button[aria-pressed="true"] { background: #28684d; }
 .world-hint { color: #bac6b9; font-size: .75rem; }
-@media (max-width: 600px) {
-  #world-demo { width: calc(100% - 16px); margin-top: 8px; border-radius: 8px; }
-  .world-canvas { height: 360px; }
-  .world-hud { inset: 8px 8px auto; }
-  .world-card { max-width: 65%; padding: 8px; font-size: .72rem; }
+
+/* The existing game UI is mounted as a HUD inside the map, not below it. */
+#app {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+#app .dashboard { display: contents; }
+#app .topbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: block;
+  width: min(285px, 25vw);
+  padding: 12px;
+  border: 1px solid rgba(236, 218, 164, .7);
+  border-radius: 8px;
+  background: rgba(15, 20, 19, .92);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .32);
+  pointer-events: auto;
+}
+#app .title-wrap { display: block; }
+#app .title-wrap span { color: #f5d477; font-size: .68rem; }
+#app .title-wrap h1 { margin-top: 3px; font-size: 1rem; }
+#app .topbar-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin-top: 9px; }
+#app .metric-pill { min-width: 0; padding: 6px 4px; border-radius: 5px; background: rgba(48, 57, 45, .8); }
+#app .metric-pill small { font-size: .58rem; }
+#app .metric-pill strong { font-size: .83rem; }
+#app .main-grid {
+  position: absolute;
+  inset: 12px 12px 64px;
+  display: grid;
+  grid-template-columns: minmax(240px, 285px) minmax(235px, 285px);
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 12px;
+  pointer-events: none;
+}
+#app .main-grid > .panel {
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  border: 1px solid rgba(236, 218, 164, .62);
+  border-radius: 8px;
+  background: rgba(15, 20, 19, .9);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .3);
+  pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #857c59 rgba(14, 18, 15, .55);
+}
+#app .main-grid > .panel::-webkit-scrollbar { width: 8px; }
+#app .main-grid > .panel::-webkit-scrollbar-thumb { border-radius: 8px; background: #857c59; }
+#app .panel-header { padding: 10px 12px; border-color: rgba(236, 218, 164, .2); }
+#app .panel-header h2, #app .panel-header h3 { color: #e6d39a; font-size: .77rem; }
+#app .hero-panel, #app .action-panel, #app .inventory-panel, #app .log-panel, #app .shop-panel { padding: 10px; }
+#app .hero-card { display: block; }
+#app .avatar { display: none; }
+#app .hero-meta h3 { font-size: 1.15rem; }
+#app .hero-meta p { font-size: .72rem; }
+#app .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 9px; }
+#app .stat-box { padding: 6px 8px; border-radius: 6px; background: rgba(42, 49, 39, .75); }
+#app .stat-box span { font-size: .59rem; }
+#app .stat-box strong { margin-top: 0; font-size: .91rem; }
+#app .progress-block { gap: 4px; margin-top: 9px; }
+#app .progress-label { font-size: .63rem; }
+#app .progress-bar { height: 12px; }
+#app .combat-summary, #app .skill-summary, #app .hunt-status { margin-top: 7px; font-size: .7rem; }
+#app .secondary-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 12px; }
+#app .panel.action-panel, #app .panel.shop-panel { overflow: visible; border-radius: 6px; background: rgba(37, 43, 34, .68); box-shadow: none; }
+#app .panel.action-panel > .panel-header, #app .panel.shop-panel > .panel-header { padding: 3px 4px 8px; }
+#app .action-btn, #app .shop-btn, #app .inventory-btn { min-height: 32px; padding: 5px 8px; border-radius: 6px; font-size: .7rem; }
+#app .auto-hunt-controls { margin-top: 8px !important; }
+#app .auto-hunt-controls select { flex-basis: 130px; padding: 6px; font-size: .68rem; }
+#app .auto-hunt-controls button { flex-basis: 120px; }
+#app .action-list { gap: 5px; margin-top: 8px !important; }
+#app .monster-list { gap: 6px; margin-top: 8px; }
+#app .monster-card { align-items: flex-start; flex-direction: column; gap: 5px; padding: 7px; border-radius: 6px; background: rgba(12, 17, 13, .72); }
+#app .monster-name strong { font-size: .73rem; }
+#app .monster-name span, #app .monster-badge { font-size: .63rem; }
+#app .monster-meta { width: 100%; justify-content: space-between; }
+#app .item-box, #app .slot-box { align-items: flex-start; gap: 6px; padding: 7px; border-radius: 6px; background: rgba(12, 17, 13, .72); }
+#app .item-info strong, #app .slot-info strong { font-size: .71rem; }
+#app .item-info small, #app .slot-info small { font-size: .62rem; }
+#app .inventory-list, #app .equipment-list, #app .shop-list { gap: 6px !important; }
+#app .inventory-list .item-box > div:last-child { justify-content: flex-start !important; }
+#app .log-item { padding: 6px 7px; font-size: .67rem; }
+#app .tag { padding: 3px 6px; font-size: .59rem; }
+
+@media (max-width: 760px) {
+  #world-demo { width: calc(100% - 16px); height: min(88vh, 820px); min-height: 610px; margin: 8px auto; border-radius: 8px; }
+  .world-card { max-width: 50%; padding: 8px; font-size: .72rem; }
   .world-controls { right: 8px; bottom: 8px; left: 8px; justify-content: stretch; }
   .world-controls select, .world-controls button { flex: 1 1 130px; }
   .world-hint { flex-basis: 100%; text-align: center; }
+  #app .topbar { top: 8px; left: 8px; width: min(245px, 43vw); padding: 8px; }
+  #app .title-wrap h1 { font-size: .78rem; }
+  #app .title-wrap span { font-size: .56rem; }
+  #app .topbar-metrics { gap: 3px; margin-top: 5px; }
+  #app .metric-pill { padding: 4px 2px; }
+  #app .metric-pill small { font-size: .49rem; }
+  #app .metric-pill strong { font-size: .68rem; }
+  #app .main-grid { inset: 8px 8px 64px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 7px; }
+  #app .main-grid > .panel { border-radius: 6px; }
+  #app .panel-header { padding: 7px 8px; }
+  #app .panel-header h2, #app .panel-header h3 { font-size: .66rem; }
+  #app .hero-panel, #app .action-panel, #app .inventory-panel, #app .log-panel, #app .shop-panel { padding: 7px; }
+  #app .secondary-grid { gap: 6px; margin-top: 8px; }
+  #app .action-list { gap: 4px; }
+  #app .action-btn, #app .shop-btn, #app .inventory-btn { min-height: 29px; padding: 4px 6px; font-size: .62rem; }
+}
+
+@media (max-width: 430px) {
+  #world-demo { min-height: 700px; }
+  .world-canvas { image-rendering: auto; }
+  .world-hud { inset: 6px 6px auto; }
+  .world-card { max-width: 45%; padding: 6px; font-size: .63rem; }
+  .world-card strong { font-size: .75rem; }
+  #app .topbar { top: 79px; left: 6px; width: calc(50% - 10px); }
+  #app .main-grid { inset: 79px 6px 64px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 5px; }
+  #app .main-grid > section { margin-top: 105px; }
+  #app .main-grid > aside { margin-top: 0; }
+  #app .metric-pill small { font-size: .44rem; }
+  #app .metric-pill strong { font-size: .62rem; }
+  #app .hero-meta h3 { font-size: .95rem; }
+  #app .monster-name strong, #app .item-info strong, #app .slot-info strong { font-size: .63rem; }
+  #app .monster-name span, #app .item-info small, #app .slot-info small { font-size: .55rem; }
+  #app .action-btn, #app .shop-btn, #app .inventory-btn { font-size: .55rem; }
 }
