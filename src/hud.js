@@ -3,7 +3,7 @@ const frame = document.querySelector('#world-demo .world-frame');
 if (!app || !frame) throw new Error('Não foi possível iniciar a barra de interface.');
 
 const icons = {
-  hunt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 9 15m-4-7 6 6m5-12 4 4m-6 7 6 6M8 5l11 14M5 19l4-4"/><circle cx="16" cy="8" r="3"/></svg>',
+  hunt: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 9 15m-4-7 6 6m5-12 4 4m-6 7 6 6M8 5l11 14"/><circle cx="16" cy="8" r="3"/></svg>',
   inventory: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5 5.5 20h13L20 8.5M3 5h18v4H3zM10 12h4"/></svg>',
   shop: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16l-1.3 11H5.3L4 9Zm-1-4h18l-1 4H4L3 5Zm6 8v7m6-7v7"/><path d="M9 5a3 3 0 0 1 6 0"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
@@ -41,22 +41,17 @@ function refreshPanel() {
   const content = panel.querySelector('.game-hud-panel-content');
   const heading = panel.querySelector('h2');
   content.replaceChildren();
-
-  const titles = { hunt: 'Caça automática', inventory: 'Inventário', shop: 'Loja' };
-  heading.textContent = titles[activePanel];
+  heading.textContent = { hunt: 'Caça automática', inventory: 'Inventário', shop: 'Loja' }[activePanel];
   const source = findSource(activePanel);
   if (!source) return;
 
   if (activePanel === 'hunt') {
-    const controls = source.querySelector('.auto-hunt-controls');
-    const huntStatus = source.querySelector('.hunt-status');
-    const monsters = source.querySelector('.monster-list');
-    if (controls) content.append(controls.cloneNode(true));
-    if (huntStatus) content.append(huntStatus.cloneNode(true));
-    if (monsters) content.append(monsters.cloneNode(true));
+    for (const selector of ['.auto-hunt-controls', '.hunt-status', '.action-list', '.monster-list']) {
+      const section = source.querySelector(selector);
+      if (section) content.append(section.cloneNode(true));
+    }
   } else {
-    const section = activePanel === 'inventory' ? source : source;
-    content.append(section.cloneNode(true));
+    content.append(source.cloneNode(true));
   }
   content.querySelectorAll('[data-action]').forEach((button) => {
     button.addEventListener('click', () => forwardAction(button));
@@ -68,8 +63,7 @@ function openPanel(name) {
     closePanel();
     return;
   }
-  // Keep the skill tree and other popups from stacking on top of each other.
-  const skillButton = toolbar.querySelector('.skill-tree-trigger');
+  const skillButton = frame.querySelector('.skill-tree-trigger');
   if (skillButton?.getAttribute('aria-expanded') === 'true') skillButton.click();
   activePanel = name;
   panel.hidden = false;

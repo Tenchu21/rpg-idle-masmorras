@@ -1,4 +1,4 @@
-/* Separate, easy-to-tap floating menu entries for the game panels. */
+/* Separate, easy-to-tap floating menu entries for game panels. */
 #world-demo .game-toolbar { gap: 6px; }
 #world-demo .toolbar-button { min-width: 76px; }
 #world-demo .toolbar-button span { white-space: nowrap; }
