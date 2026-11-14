@@ -1,32 +1,18 @@
 
-.auto-hunt-controls select {
-  flex: 1 1 180px;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgba(11, 17, 27, 0.9);
-  color: var(--text);
+.combat-summary,
+.skill-summary {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
-.auto-hunt-controls button {
-  flex: 1 1 160px;
+.hunt-status {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 8px 0 0;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+.auto-hunt-controls select:disabled {
+  opacity: 0.65;
 }
