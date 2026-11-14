@@ -12,32 +12,40 @@ chat.innerHTML = `
     <div class="combat-chat-title"><span class="chat-live-dot" aria-hidden="true"></span><strong>Combate</strong><span class="chat-count" aria-label="Abates registrados">0</span></div>
     <button type="button" class="combat-chat-toggle" aria-label="Minimizar chat" aria-expanded="true">−</button>
   </header>
-  <ol class="combat-chat-messages" role="log" aria-live="polite" aria-relevant="additions">
-    <li class="chat-welcome">Registro de abates: monstros derrotados aparecerão aqui.</li>
-  </ol>`;
+  <ol class="combat-chat-messages" role="log" aria-live="polite" aria-relevant="additions"><li class="chat-welcome">Registro de abates: monstros derrotados aparecerão aqui.</li></ol>`;
 frame.append(chat);
 
 const messageList = chat.querySelector('.combat-chat-messages');
 const counter = chat.querySelector('.chat-count');
 const toggle = chat.querySelector('.combat-chat-toggle');
 let messages = loadMessages();
-let lastObservedLog = gameApp.querySelector('.log-item')?.textContent.trim() || '';
+let previousLogs = readLogs();
+
+function readLogs() {
+  return [...gameApp.querySelectorAll('.log-item')].map((entry) => entry.textContent.trim());
+}
+
+function getNewLogs(current, previous) {
+  for (let overlap = Math.min(current.length, previous.length); overlap >= 0; overlap -= 1) {
+    let matches = true;
+    for (let index = 0; index < overlap; index += 1) {
+      if (current[index] !== previous[previous.length - overlap + index]) { matches = false; break; }
+    }
+    if (matches) return current.slice(0, current.length - overlap);
+  }
+  return current;
+}
 
 function loadMessages() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     return Array.isArray(parsed) ? parsed.slice(-MAX_MESSAGES) : [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 }
 
 function saveMessages() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES)));
-  } catch (error) {
-    console.warn('Não foi possível salvar o chat de combate.', error);
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_MESSAGES))); }
+  catch (error) { console.warn('Não foi possível salvar o chat de combate.', error); }
 }
 
 function renderMessages() {
@@ -64,22 +72,22 @@ function renderMessages() {
   messageList.scrollTop = messageList.scrollHeight;
 }
 
-function recordKillFromGameLog() {
-  const latest = gameApp.querySelector('.log-item');
-  const text = latest?.textContent.trim();
-  if (!text || text === lastObservedLog) return;
-  lastObservedLog = text;
-
-  const defeated = text.match(/^(.+?) derrotado!\s*(.*)$/i);
-  if (!defeated) return;
-
-  messages.push({
-    text: `${defeated[1]} derrotado${defeated[2] ? ` · ${defeated[2]}` : ''}`,
-    timestamp: new Date().toISOString(),
-  });
-  messages = messages.slice(-MAX_MESSAGES);
-  saveMessages();
-  renderMessages();
+function recordKills() {
+  const currentLogs = readLogs();
+  const newLogs = getNewLogs(currentLogs, previousLogs);
+  previousLogs = currentLogs;
+  let changed = false;
+  for (const text of newLogs) {
+    const defeated = text.match(/^(.+?) derrotado!\s*(.*)$/i);
+    if (!defeated) continue;
+    messages.push({ text: `${defeated[1]} derrotado${defeated[2] ? ` · ${defeated[2]}` : ''}`, timestamp: new Date().toISOString() });
+    changed = true;
+  }
+  if (changed) {
+    messages = messages.slice(-MAX_MESSAGES);
+    saveMessages();
+    renderMessages();
+  }
 }
 
 toggle.addEventListener('click', () => {
@@ -88,11 +96,5 @@ toggle.addEventListener('click', () => {
   toggle.setAttribute('aria-label', collapsed ? 'Expandir chat' : 'Minimizar chat');
   toggle.textContent = collapsed ? '+' : '−';
 });
-
-new MutationObserver(recordKillFromGameLog).observe(gameApp, {
-  childList: true,
-  subtree: true,
-  characterData: true,
-});
-
+new MutationObserver(recordKills).observe(gameApp, { childList: true, subtree: true, characterData: true });
 renderMessages();
